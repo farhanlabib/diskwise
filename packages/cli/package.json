@@ -1,0 +1,21 @@
+{
+  "name": "macsweep",
+  "version": "0.0.0",
+  "description": "Explains where your Mac's disk space went and only deletes what is provably safe.",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "macsweep": "./dist/index.js" },
+  "files": ["dist"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --platform node --target node20 --clean --noExternal @macsweep/core --noExternal @macsweep/report --noExternal @macsweep/server",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@macsweep/core": "workspace:*",
+    "@macsweep/report": "workspace:*",
+    "@macsweep/server": "workspace:*",
+    "commander": "^12.1.0",
+    "zod": "^3.23.0"
+  }
+}

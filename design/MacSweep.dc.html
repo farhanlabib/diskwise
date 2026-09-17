@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: #d9d9dc;
+  }
+  :root {
+    --win: #ffffff; --content: #ffffff; --sidebar: #e9e9ec; --toolbar: #f4f4f6;
+    --text: #1d1d1f; --text2: #6a6a6f; --text3: #96969b;
+    --border: rgba(0,0,0,0.09); --border2: rgba(0,0,0,0.06);
+    --card: #f6f6f8; --card-line: rgba(0,0,0,0.07); --hover: rgba(0,0,0,0.045);
+    --active: rgba(0,0,0,0.08); --sel: rgba(10,120,220,0.12); --sel-line: rgba(10,120,220,0.5);
+    --accent: #0a6fd6; --accent-fg:#ffffff;
+    --t0-soft: rgba(21,138,102,0.13); --t0-fg:#0e7150; --t0-line: rgba(21,138,102,0.28); --t0-dot:#158a66;
+    --t1-soft: rgba(42,110,184,0.13); --t1-fg:#295fa8; --t1-line: rgba(42,110,184,0.28); --t1-dot:#2a6eb8;
+    --t2-soft: rgba(176,120,20,0.15); --t2-fg:#8a5c00; --t2-line: rgba(176,120,20,0.30); --t2-dot:#b07814;
+    --t3-soft: rgba(110,110,120,0.14); --t3-fg:#5c5c64; --t3-line: rgba(110,110,120,0.28); --t3-dot:#6e6e78;
+    --root-soft: rgba(120,80,180,0.13); --root-fg:#6a44a8; --root-line:rgba(120,80,180,0.28);
+    --seg-apps:#7b8794; --seg-dev:#2a6eb8; --seg-cache:#158a66; --seg-data:#b07814;
+    --seg-sys:#8a6bb0; --seg-purge:#5aa9d6; --seg-free:#cfcfd4;
+    --shadow: 0 20px 60px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12);
+  }
+  [data-theme="dark"] {
+    --win:#1c1c1e; --content:#1c1c1e; --sidebar:#252528; --toolbar:#2b2b2e;
+    --text:#f2f2f5; --text2:#a0a0a6; --text3:#77777d;
+    --border: rgba(255,255,255,0.10); --border2: rgba(255,255,255,0.06);
+    --card:#2a2a2d; --card-line: rgba(255,255,255,0.08); --hover: rgba(255,255,255,0.05);
+    --active: rgba(255,255,255,0.09); --sel: rgba(40,120,210,0.24); --sel-line: rgba(70,150,240,0.7);
+    --accent:#3a92ff; --accent-fg:#ffffff;
+    --t0-soft: rgba(38,168,126,0.18); --t0-fg:#4fcfa1; --t0-line: rgba(38,168,126,0.4); --t0-dot:#33b98d;
+    --t1-soft: rgba(74,150,240,0.18); --t1-fg:#6db1ff; --t1-line: rgba(74,150,240,0.4); --t1-dot:#4a96f0;
+    --t2-soft: rgba(214,160,60,0.20); --t2-fg:#e6b45a; --t2-line: rgba(214,160,60,0.42); --t2-dot:#d6a03c;
+    --t3-soft: rgba(150,150,160,0.18); --t3-fg:#b0b0b8; --t3-line: rgba(150,150,160,0.34); --t3-dot:#96969b;
+    --root-soft: rgba(160,120,220,0.18); --root-fg:#c0a0f0; --root-line:rgba(160,120,220,0.4);
+    --seg-apps:#8a95a3; --seg-dev:#4a96f0; --seg-cache:#33b98d; --seg-data:#d6a03c;
+    --seg-sys:#a888d0; --seg-purge:#6db8e0; --seg-free:#3a3a3e;
+    --shadow: 0 20px 60px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.4);
+  }
+  @keyframes skel { 0%{opacity:0.4} 50%{opacity:0.75} 100%{opacity:0.4} }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes barfill { from { transform: scaleX(0); } }
+  .mono { font-family: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, monospace; }
+</style>
+</helmet>
+<div data-theme="{{ theme }}" style="min-height:100vh; display:flex; align-items:flex-start; justify-content:center; padding:28px; background:#d9d9dc; color:var(--text);">
+<div data-theme="{{ theme }}" style="width:1280px; flex:none; height:800px; background:var(--win); border-radius:11px; overflow:hidden; box-shadow:var(--shadow); display:flex; flex-direction:column; position:relative; color:var(--text);">
+
+  <!-- ============ TOP TOOLBAR ============ -->
+  <div style="height:52px; flex:none; background:var(--toolbar); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; padding:0 16px;">
+    <div style="display:flex; gap:8px; align-items:center;">
+      <div style="width:12px;height:12px;border-radius:50%;background:#ff5f57;"></div>
+      <div style="width:12px;height:12px;border-radius:50%;background:#febc2e;"></div>
+      <div style="width:12px;height:12px;border-radius:50%;background:#28c840;"></div>
+    </div>
+    <div style="font-weight:600; font-size:13px; letter-spacing:-0.01em; margin-left:6px;">MacSweep</div>
+    <div style="flex:1;"></div>
+    <div style="display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text2); background:var(--card); border:1px solid var(--card-line); padding:4px 9px; border-radius:6px;">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--t0-dot);"></span>
+      <span class="mono">Local · 127.0.0.1</span>
+    </div>
+    <button onClick="{{ toggleTheme }}" style="font-size:11.5px; color:var(--text2); background:var(--card); border:1px solid var(--card-line); padding:5px 10px; border-radius:6px; cursor:pointer;">{{ themeLabel }}</button>
+    <button onClick="{{ stopServer }}" style="font-size:11.5px; color:var(--text2); background:var(--card); border:1px solid var(--card-line); padding:5px 10px; border-radius:6px; cursor:pointer;">Stop server</button>
+  </div>
+
+  <div style="flex:1; display:flex; min-height:0;">
+    <!-- ============ SIDEBAR ============ -->
+    <div style="width:216px; flex:none; background:var(--sidebar); border-right:1px solid var(--border); padding:12px 10px; display:flex; flex-direction:column; gap:2px;">
+      <div style="font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.05em; padding:6px 8px 4px;">MacSweep</div>
+      <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
+        <div onClick="{{ item.go }}" style="{{ item.style }}">
+          <span style="width:18px;text-align:center;font-size:13px;">{{ item.icon }}</span>
+          <span style="flex:1;">{{ item.label }}</span>
+          <sc-if value="{{ item.badge }}" hint-placeholder-val="">
+            <span class="mono" style="font-size:10.5px; color:var(--text3);">{{ item.badge }}</span>
+          </sc-if>
+        </div>
+      </sc-for>
+      <div style="flex:1;"></div>
+      <div style="padding:10px 8px; border-top:1px solid var(--border2); display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--text2);">
+        <span style="width:8px;height:8px;border-radius:50%;background:{{ fdaDot }};"></span>
+        <span>Full Disk Access: {{ fdaLabel }}</span>
+      </div>
+    </div>
+
+    <!-- ============ MAIN ============ -->
+    <div style="flex:1; min-width:0; display:flex; flex-direction:column; background:var(--content); position:relative;">
+
+      <!-- ===== OVERVIEW ===== -->
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1; overflow-y:auto; padding:32px 36px;">
+        <div style="font-size:13px; color:var(--text2); font-weight:500;">Overview</div>
+        <div style="display:flex; align-items:baseline; gap:14px; margin-top:6px;">
+          <div style="font-size:40px; font-weight:680; letter-spacing:-0.02em;">38.4 GB</div>
+          <div style="font-size:17px; color:var(--text2); font-weight:500;">reclaimable</div>
+        </div>
+        <div style="font-size:13px; color:var(--text2); margin-top:4px;">12.1 GB regenerates · 24.9 GB re-download · 1.4 GB your data</div>
+
+        <!-- disk bar -->
+        <div style="margin-top:26px; background:var(--card); border:1px solid var(--card-line); border-radius:10px; padding:18px;">
+          <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text2); margin-bottom:10px;">
+            <span style="font-weight:600; color:var(--text);">Macintosh HD — 494 GB</span>
+            <span class="mono">228 GB used · 266 GB free</span>
+          </div>
+          <div style="display:flex; height:26px; border-radius:6px; overflow:hidden; gap:2px;">
+            <sc-for list="{{ segments }}" as="seg" hint-placeholder-count="8">
+              <div title="{{ seg.title }}" style="{{ seg.style }}"></div>
+            </sc-for>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:14px 20px; margin-top:14px;">
+            <sc-for list="{{ segments }}" as="seg" hint-placeholder-count="8">
+              <div style="display:flex; align-items:center; gap:7px; font-size:12px;">
+                <span style="{{ seg.dotStyle }}"></span>
+                <span style="color:var(--text2);">{{ seg.label }}</span>
+                <span class="mono" style="color:var(--text);">{{ seg.sizeLabel }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:18px; margin-top:22px;">
+          <!-- largest wins -->
+          <div>
+            <div style="font-size:14px; font-weight:600; margin-bottom:10px;">Largest wins</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <sc-for list="{{ largestWins }}" as="w" hint-placeholder-count="5">
+                <div onClick="{{ w.go }}" style="display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--card-line); border-radius:9px; padding:13px 15px; cursor:pointer;" style-hover="border-color:var(--sel-line);">
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:13.5px; font-weight:550; letter-spacing:-0.01em;">{{ w.title }}</div>
+                    <div style="font-size:11.5px; color:var(--text3); margin-top:2px;">{{ w.detail }}</div>
+                  </div>
+                  <div class="mono" style="font-size:14px; font-weight:600; text-align:right; min-width:64px;">{{ w.size }}</div>
+                  <span style="{{ w.badgeStyle }}">{{ w.tierLabel }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <!-- trap card -->
+          <div>
+            <div style="font-size:14px; font-weight:600; margin-bottom:10px;">Good news</div>
+            <div style="background:var(--t0-soft); border:1px solid var(--t0-line); border-radius:9px; padding:16px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <span style="font-size:15px;">✓</span>
+                <span style="font-size:13.5px; font-weight:600; color:var(--t0-fg);">Docker.raw isn't the problem</span>
+              </div>
+              <div style="font-size:12.5px; color:var(--text2); line-height:1.5;">Finder shows <span class="mono">228 GB</span>, but it's a sparse file — only <span class="mono" style="color:var(--text);">2.7 GB</span> is actually allocated on disk. Nothing to do here.</div>
+            </div>
+            <div style="background:var(--card); border:1px solid var(--card-line); border-radius:9px; padding:16px; margin-top:12px;">
+              <div style="font-size:12.5px; color:var(--text2); line-height:1.55;">Numbers we couldn't read (protected or need root) are shown as <span style="color:var(--text); font-weight:600;">Unmeasured</span>, never hidden.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== SYSTEM DATA ===== -->
+      <sc-if value="{{ isSystem }}" hint-placeholder-val="">
+      <div style="flex:1; display:flex; min-height:0;">
+        <div style="flex:1; overflow-y:auto; padding:32px 36px;">
+          <div style="font-size:13px; color:var(--text2); font-weight:500;">System Data</div>
+          <div style="font-size:26px; font-weight:660; letter-spacing:-0.02em; margin-top:4px;">What macOS calls "System Data"</div>
+          <div style="font-size:13px; color:var(--text2); margin-top:4px;">78.2 GB total — decomposed into named buckets. The buckets plus Unmeasured always equal the total.</div>
+          <div style="display:flex; flex-direction:column; gap:9px; margin-top:22px;">
+            <sc-for list="{{ sysBuckets }}" as="b" hint-placeholder-count="6">
+              <div onClick="{{ b.go }}" style="{{ b.rowStyle }}">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:13.5px; font-weight:550;">{{ b.name }}</div>
+                    <div style="font-size:11.5px; color:var(--text3); margin-top:2px;">{{ b.note }}</div>
+                  </div>
+                  <div class="mono" style="font-size:13.5px; font-weight:600;">{{ b.size }}</div>
+                  <span style="{{ b.badgeStyle }}">{{ b.tierLabel }}</span>
+                </div>
+                <div style="height:6px; border-radius:3px; margin-top:11px; {{ b.barBg }}"><div style="{{ b.barFill }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <!-- detail panel -->
+        <div style="width:320px; flex:none; border-left:1px solid var(--border); background:var(--card); overflow-y:auto; padding:24px;">
+          <sc-if value="{{ sysSel }}" hint-placeholder-val="{{ true }}">
+            <span style="{{ sysSel.badgeStyle }}">{{ sysSel.tierLabel }}</span>
+            <div style="font-size:16px; font-weight:640; margin:12px 0 2px; letter-spacing:-0.01em;">{{ sysSel.name }}</div>
+            <div class="mono" style="font-size:12px; color:var(--text2);">{{ sysSel.path }}</div>
+            <div style="font-size:12.5px; color:var(--text2); line-height:1.55; margin-top:16px;">{{ sysSel.what }}</div>
+            <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text3); margin:18px 0 6px;">Safe to reclaim?</div>
+            <div style="font-size:12.5px; color:var(--text); line-height:1.55;">{{ sysSel.safe }}</div>
+            <sc-if value="{{ sysSel.command }}" hint-placeholder-val="">
+              <div style="margin-top:16px; background:var(--win); border:1px solid var(--border); border-radius:8px; padding:12px;">
+                <div style="font-size:11px; color:var(--text3); margin-bottom:6px;">Needs root — run this yourself:</div>
+                <div class="mono" style="font-size:11.5px; color:var(--text); word-break:break-all;">{{ sysSel.command }}</div>
+                <button style="margin-top:10px; font-size:11.5px; background:var(--accent); color:var(--accent-fg); border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">Copy command</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ sysSel.reviewable }}" hint-placeholder-val="">
+              <button onClick="{{ goCleanup }}" style="margin-top:18px; width:100%; font-size:13px; font-weight:550; background:var(--accent); color:var(--accent-fg); border:none; padding:9px; border-radius:7px; cursor:pointer;">Review in Cleanup</button>
+            </sc-if>
+          </sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== APPS ===== -->
+      <sc-if value="{{ isApps }}" hint-placeholder-val="">
+      <sc-if value="{{ appsListMode }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1; display:flex; flex-direction:column; min-height:0;">
+        <div style="padding:24px 36px 14px; border-bottom:1px solid var(--border);">
+          <div style="font-size:13px; color:var(--text2); font-weight:500;">Apps</div>
+          <div style="font-size:22px; font-weight:640; letter-spacing:-0.02em; margin-top:2px;">Installed apps</div>
+          <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
+            <sc-for list="{{ appFilters }}" as="f" hint-placeholder-count="5">
+              <span style="{{ f.style }}">{{ f.label }}</span>
+            </sc-for>
+          </div>
+        </div>
+        <div style="flex:1; overflow-y:auto;">
+          <div style="display:grid; grid-template-columns:1fr 120px 90px 90px 84px; gap:12px; padding:10px 36px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:var(--text3); border-bottom:1px solid var(--border2);">
+            <span>App</span><span>Last used</span><span style="text-align:right;">Caches</span><span style="text-align:right;">App data</span><span style="text-align:right;">Total</span>
+          </div>
+          <sc-for list="{{ apps }}" as="a" hint-placeholder-count="8">
+            <div onClick="{{ a.go }}" style="display:grid; grid-template-columns:1fr 120px 90px 90px 84px; gap:12px; align-items:center; padding:11px 36px; border-bottom:1px solid var(--border2); cursor:pointer;" style-hover="background:var(--hover);">
+              <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+                <div style="width:32px;height:32px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff; {{ a.iconBg }}">{{ a.initial }}</div>
+                <div style="min-width:0;">
+                  <div style="font-size:13px; font-weight:550; display:flex; align-items:center; gap:7px;">{{ a.name }}
+                    <sc-if value="{{ a.running }}" hint-placeholder-val=""><span style="width:7px;height:7px;border-radius:50%;background:var(--t0-dot);" title="Running"></span></sc-if>
+                    <sc-if value="{{ a.orphan }}" hint-placeholder-val=""><span style="font-size:10px; color:var(--t2-fg); background:var(--t2-soft); padding:1px 6px; border-radius:4px;">orphaned</span></sc-if>
+                  </div>
+                  <div class="mono" style="font-size:10.5px; color:var(--text3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.sub }}</div>
+                </div>
+              </div>
+              <div style="font-size:12px; color:var(--text2);">{{ a.lastUsed }}</div>
+              <div class="mono" style="font-size:12.5px; text-align:right; color:var(--t0-fg); font-weight:600;">{{ a.caches }}</div>
+              <div class="mono" style="font-size:12.5px; text-align:right; color:var(--text2);">{{ a.appData }}</div>
+              <div class="mono" style="font-size:12.5px; text-align:right; font-weight:600;">{{ a.total }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+      <!-- app detail -->
+      <sc-if value="{{ appDetailMode }}" hint-placeholder-val="">
+      <div style="flex:1; overflow-y:auto; padding:0;">
+        <div style="padding:20px 36px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px;">
+          <button onClick="{{ backToApps }}" style="font-size:12.5px; color:var(--accent); background:none; border:none; cursor:pointer; padding:0;">‹ Apps</button>
+        </div>
+        <div style="padding:28px 36px;">
+          <div style="display:flex; align-items:center; gap:18px;">
+            <div style="width:64px;height:64px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff; {{ appD.iconBg }}">{{ appD.initial }}</div>
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="font-size:22px; font-weight:660; letter-spacing:-0.02em;">{{ appD.name }}</div>
+                <sc-if value="{{ appD.running }}" hint-placeholder-val="{{ true }}">
+                  <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--t0-fg);background:var(--t0-soft);padding:3px 9px;border-radius:5px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--t0-dot);"></span>Running</span>
+                </sc-if>
+              </div>
+              <div class="mono" style="font-size:12px; color:var(--text3); margin-top:4px;">{{ appD.sub }} · last used {{ appD.lastUsed }}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px; color:var(--text3);">Known app profile</div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:12px; margin-top:24px;">
+            <sc-for list="{{ appGroups }}" as="g" hint-placeholder-count="5">
+              <div style="background:var(--card); border:1px solid var(--card-line); border-radius:10px; padding:16px 18px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="font-size:14px; font-weight:600; flex:1;">{{ g.name }}</div>
+                  <span style="{{ g.badgeStyle }}">{{ g.tierLabel }}</span>
+                  <div class="mono" style="font-size:14px; font-weight:600; min-width:64px; text-align:right;">{{ g.size }}</div>
+                </div>
+                <div style="font-size:12.5px; color:var(--text2); line-height:1.5; margin-top:8px;">{{ g.note }}</div>
+                <sc-if value="{{ g.noAction }}" hint-placeholder-val="">
+                  <div style="font-size:11.5px; color:var(--text3); margin-top:8px; font-style:italic;">{{ g.noAction }}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:12px; margin-top:22px;">
+            <sc-if value="{{ appD.running }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ quitApp }}" style="font-size:13.5px; font-weight:600; background:var(--accent); color:var(--accent-fg); border:none; padding:11px 20px; border-radius:8px; cursor:pointer;">Quit {{ appD.name }} to clean</button>
+              <span style="font-size:12px; color:var(--text2);">Caches can't be cleaned while the app is running.</span>
+            </sc-if>
+            <sc-if value="{{ appD.cleanable }}" hint-placeholder-val="">
+              <button onClick="{{ openReview }}" style="font-size:13.5px; font-weight:600; background:var(--accent); color:var(--accent-fg); border:none; padding:11px 20px; border-radius:8px; cursor:pointer;">Clean caches · {{ appD.cleanSize }}</button>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+      </sc-if>
+
+      <!-- ===== CLEANUP ===== -->
+      <sc-if value="{{ isCleanup }}" hint-placeholder-val="">
+      <div style="flex:1; display:flex; min-height:0;">
+        <!-- filter rail -->
+        <div style="width:180px; flex:none; border-right:1px solid var(--border); padding:20px 14px; overflow-y:auto;">
+          <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text3); margin-bottom:8px;">Category</div>
+          <sc-for list="{{ cleanupCats }}" as="c" hint-placeholder-count="5">
+            <div style="{{ c.style }}">{{ c.label }}</div>
+          </sc-for>
+        </div>
+        <!-- list -->
+        <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
+          <div style="flex:1; overflow-y:auto; padding:22px 26px 90px;">
+            <div style="font-size:22px; font-weight:640; letter-spacing:-0.02em; margin-bottom:4px;">Cleanup</div>
+            <div style="font-size:12.5px; color:var(--text2); margin-bottom:18px;">Select what to reclaim. Every item explains why it's safe and what it costs to get back.</div>
+            <sc-for list="{{ cleanupGroups }}" as="grp" hint-placeholder-count="3">
+              <div style="margin-bottom:22px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:9px;">
+                  <span style="{{ grp.badgeStyle }}">{{ grp.tierLabel }}</span>
+                  <span style="font-size:12.5px; color:var(--text2);">{{ grp.desc }}</span>
+                  <span style="flex:1;"></span>
+                  <span class="mono" style="font-size:12px; color:var(--text3);">{{ grp.total }}</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                  <sc-for list="{{ grp.items }}" as="it" hint-placeholder-count="3">
+                    <div onClick="{{ it.go }}" style="{{ it.rowStyle }}">
+                      <sc-if value="{{ it.checkbox }}" hint-placeholder-val="{{ true }}">
+                        <div onClick="{{ it.toggle }}" style="{{ it.boxStyle }}">{{ it.check }}</div>
+                      </sc-if>
+                      <sc-if value="{{ it.rootCmd }}" hint-placeholder-val="">
+                        <span style="font-size:13px;">⌘</span>
+                      </sc-if>
+                      <div style="flex:1; min-width:0;">
+                        <div style="font-size:13px; font-weight:550;">{{ it.title }}</div>
+                        <div class="mono" style="font-size:11px; color:var(--text3); margin-top:2px;">{{ it.detail }}</div>
+                      </div>
+                      <sc-if value="{{ it.blocked }}" hint-placeholder-val="">
+                        <span style="font-size:10.5px; color:var(--t2-fg); background:var(--t2-soft); padding:2px 7px; border-radius:5px;">{{ it.blocked }}</span>
+                      </sc-if>
+                      <div class="mono" style="font-size:13px; font-weight:600; min-width:60px; text-align:right;">{{ it.size }}</div>
+                      <span style="{{ it.badgeStyle }}">{{ it.tierShort }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <!-- sticky footer -->
+          <div style="position:absolute; left:180px; right:340px; bottom:0; background:var(--toolbar); border-top:1px solid var(--border); padding:13px 26px; display:flex; align-items:center; gap:14px;">
+            <div style="font-size:13px;"><span style="font-weight:600;">{{ selCount }} items</span> <span style="color:var(--text2);">selected · {{ selTotal }} · Dry run preview</span></div>
+            <span style="flex:1;"></span>
+            <button onClick="{{ openReview }}" style="{{ reviewBtnStyle }}">Review plan…</button>
+          </div>
+        </div>
+        <!-- detail panel -->
+        <div style="width:340px; flex:none; border-left:1px solid var(--border); background:var(--card); overflow-y:auto; padding:24px;">
+          <sc-if value="{{ findSel }}" hint-placeholder-val="{{ true }}">
+            <span style="{{ findSel.badgeStyle }}">{{ findSel.tierLabel }}</span>
+            <div style="font-size:16px; font-weight:640; margin:12px 0 2px; letter-spacing:-0.01em;">{{ findSel.title }}</div>
+            <div class="mono" style="font-size:11.5px; color:var(--text2);">{{ findSel.detail }}</div>
+            <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text3); margin:18px 0 6px;">Why it's safe</div>
+            <div style="font-size:12.5px; color:var(--text); line-height:1.55;">{{ findSel.why }}</div>
+            <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text3); margin:16px 0 6px;">Cost to get back</div>
+            <div style="font-size:12.5px; color:var(--text); line-height:1.55;">{{ findSel.cost }}</div>
+            <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text3); margin:16px 0 6px;">Exact action</div>
+            <div style="background:var(--win); border:1px solid var(--border); border-radius:8px; padding:11px 12px;">
+              <div class="mono" style="font-size:11.5px; word-break:break-all;">{{ findSel.action }}</div>
+            </div>
+            <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text3); margin:16px 0 6px;">Paths</div>
+            <sc-for list="{{ findSel.paths }}" as="p" hint-placeholder-count="2">
+              <div style="display:flex; align-items:center; gap:8px; padding:6px 0;">
+                <span class="mono" style="font-size:11px; color:var(--text2); flex:1; word-break:break-all;">{{ p }}</span>
+                <button style="font-size:10.5px; color:var(--accent); background:none; border:none; cursor:pointer;">Reveal</button>
+              </div>
+            </sc-for>
+          </sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== RUNNING ===== -->
+      <sc-if value="{{ isRunning }}" hint-placeholder-val="">
+      <div style="flex:1; overflow-y:auto; padding:36px; display:flex; flex-direction:column; align-items:center;">
+        <div style="width:100%; max-width:560px;">
+          <div style="font-size:22px; font-weight:640; letter-spacing:-0.02em;">Cleaning…</div>
+          <div style="font-size:13px; color:var(--text2); margin-top:4px;">{{ runDone }} of {{ runTotal }} done</div>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:22px;">
+            <sc-for list="{{ runItems }}" as="r" hint-placeholder-count="5">
+              <div style="display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--card-line); border-radius:8px; padding:12px 15px;">
+                <span style="{{ r.iconStyle }}">{{ r.icon }}</span>
+                <div style="flex:1;">
+                  <div style="font-size:13px; font-weight:550;">{{ r.title }}</div>
+                  <div style="font-size:11.5px; color:var(--text3);">{{ r.status }}</div>
+                </div>
+                <div class="mono" style="font-size:12.5px; color:var(--text2);">{{ r.size }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== RESULT ===== -->
+      <sc-if value="{{ isResult }}" hint-placeholder-val="">
+      <div style="flex:1; overflow-y:auto; padding:36px; display:flex; flex-direction:column; align-items:center;">
+        <div style="width:100%; max-width:560px;">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--t0-soft);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--t0-fg);">✓</div>
+          <div style="font-size:28px; font-weight:660; letter-spacing:-0.02em; margin-top:16px;">Freed 20.8 GB</div>
+          <div style="font-size:13.5px; color:var(--text2); margin-top:4px;">Planned 21.3 GB. Docker.raw shrinks gradually, so the last 0.5 GB will free up over the next few minutes.</div>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:24px;">
+            <sc-for list="{{ runItems }}" as="r" hint-placeholder-count="5">
+              <div style="display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--card-line); border-radius:8px; padding:12px 15px;">
+                <span style="color:var(--t0-dot); font-size:14px;">✓</span>
+                <div style="flex:1; font-size:13px; font-weight:550;">{{ r.title }}</div>
+                <div class="mono" style="font-size:12.5px; color:var(--text2);">{{ r.freed }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex; gap:12px; margin-top:24px;">
+            <button onClick="{{ goHistory }}" style="font-size:13px; font-weight:550; background:var(--accent); color:var(--accent-fg); border:none; padding:10px 18px; border-radius:8px; cursor:pointer;">View in History</button>
+            <button style="font-size:13px; font-weight:550; background:var(--card); color:var(--text); border:1px solid var(--card-line); padding:10px 18px; border-radius:8px; cursor:pointer;">Undo trash moves</button>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== HISTORY ===== -->
+      <sc-if value="{{ isHistory }}" hint-placeholder-val="">
+      <div style="flex:1; overflow-y:auto; padding:32px 36px;">
+        <div style="font-size:13px; color:var(--text2); font-weight:500;">History</div>
+        <div style="font-size:22px; font-weight:640; letter-spacing:-0.02em; margin-top:2px;">Cleanup runs</div>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
+          <sc-for list="{{ history }}" as="h" hint-placeholder-count="4">
+            <div style="background:var(--card); border:1px solid var(--card-line); border-radius:10px; padding:16px 18px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="flex:1;">
+                  <div style="font-size:14px; font-weight:600;">{{ h.date }}</div>
+                  <div style="font-size:12px; color:var(--text3); margin-top:2px;">{{ h.items }} items · {{ h.freed }} freed</div>
+                </div>
+                <sc-if value="{{ h.undoable }}" hint-placeholder-val="{{ true }}">
+                  <button style="font-size:12px; color:var(--accent); background:none; border:1px solid var(--card-line); padding:6px 12px; border-radius:6px; cursor:pointer;">Undo</button>
+                </sc-if>
+                <sc-if value="{{ h.reason }}" hint-placeholder-val="">
+                  <span style="font-size:11.5px; color:var(--text3);">{{ h.reason }}</span>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== SETTINGS ===== -->
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="">
+      <div style="flex:1; overflow-y:auto; padding:32px 36px; max-width:640px;">
+        <div style="font-size:22px; font-weight:640; letter-spacing:-0.02em;">Settings</div>
+        <div style="margin-top:22px; display:flex; flex-direction:column; gap:18px;">
+          <div style="background:var(--card); border:1px solid var(--card-line); border-radius:10px; padding:18px;">
+            <div style="font-size:13px; font-weight:600; margin-bottom:12px;">Scan</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; font-size:13px;"><span>Scan scope</span><span class="mono" style="color:var(--text2);">Home only</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; font-size:13px; border-top:1px solid var(--border2);"><span>node_modules age threshold</span><span class="mono" style="color:var(--text2);">14 days</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; font-size:13px; border-top:1px solid var(--border2);"><span>Redact usernames in exported reports</span><span style="width:34px;height:20px;border-radius:10px;background:var(--t0-dot);position:relative;"><span style="position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;"></span></span></div>
+          </div>
+          <div style="background:var(--card); border:1px solid var(--card-line); border-radius:10px; padding:18px;">
+            <div style="font-size:13px; font-weight:600; margin-bottom:12px;">Local server</div>
+            <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px;"><span>Address</span><span class="mono" style="color:var(--text2);">127.0.0.1:52814</span></div>
+            <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px;"><span>Uptime</span><span class="mono" style="color:var(--text2);">4m 12s</span></div>
+            <button onClick="{{ stopServer }}" style="margin-top:12px; font-size:12.5px; color:#d9544f; background:none; border:1px solid var(--card-line); padding:7px 14px; border-radius:7px; cursor:pointer;">Stop server</button>
+          </div>
+          <div style="background:var(--card); border:1px solid var(--card-line); border-radius:10px; padding:18px;">
+            <div style="font-size:13px; font-weight:600; margin-bottom:8px;">About</div>
+            <div style="font-size:12.5px; color:var(--text2); line-height:1.6;">MacSweep v1.0 · Open source, MIT · <span style="color:var(--text);">No outbound network. No telemetry.</span></div>
+            <div style="display:flex; gap:10px; margin-top:12px;">
+              <button style="font-size:12px; background:var(--win); border:1px solid var(--card-line); color:var(--text); padding:7px 13px; border-radius:6px; cursor:pointer;">Export Markdown</button>
+              <button style="font-size:12px; background:var(--win); border:1px solid var(--card-line); color:var(--text); padding:7px 13px; border-radius:6px; cursor:pointer;">Export JSON</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+  </div>
+
+  <!-- ============ ONBOARDING OVERLAY ============ -->
+  <sc-if value="{{ showOnboarding }}" hint-placeholder-val="">
+  <div style="position:absolute; inset:0; background:var(--content); display:flex; align-items:center; justify-content:center; padding:40px;">
+    <div style="width:100%; max-width:520px;">
+      <div style="width:48px;height:48px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;letter-spacing:-0.02em;color:#fff;">MS</div>
+      <div style="font-size:26px; font-weight:660; letter-spacing:-0.02em; margin-top:20px;">Grant Full Disk Access to iTerm2</div>
+      <div style="font-size:13.5px; color:var(--text2); line-height:1.6; margin-top:8px;">MacSweep runs inside your terminal, so access is granted to the terminal app that launched it. Without it, parts of Mail, Messages and Safari are unreadable and get reported as "Unreadable".</div>
+      <div style="background:var(--card); border:1px solid var(--card-line); border-radius:10px; padding:18px; margin-top:20px;">
+        <div style="font-size:12.5px; color:var(--text); line-height:1.9;">1. Open System Settings → Privacy &amp; Security → Full Disk Access<br>2. Enable <b>iTerm2</b><br>3. Quit and re-run the command below</div>
+        <div style="display:flex; align-items:center; gap:10px; margin-top:14px; background:var(--win); border:1px solid var(--border); border-radius:7px; padding:9px 12px;">
+          <span class="mono" style="font-size:12.5px; flex:1;">macsweep ui</span>
+          <button style="font-size:11.5px; background:var(--accent); color:#fff; border:none; padding:5px 11px; border-radius:5px; cursor:pointer;">Copy</button>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; margin-top:16px; font-size:12.5px; color:var(--text2);">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--t2-dot);"></span> Status: Limited access
+      </div>
+      <div style="font-size:12px; color:var(--text3); line-height:1.6; margin-top:16px;">Runs only on this Mac. No outbound network. No telemetry. Nothing is deleted without your confirmation.</div>
+      <div style="display:flex; gap:12px; margin-top:22px;">
+        <button onClick="{{ startScan }}" style="font-size:13.5px; font-weight:600; background:var(--accent); color:#fff; border:none; padding:11px 20px; border-radius:8px; cursor:pointer;">Continue with limited access</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ SCANNING OVERLAY ============ -->
+  <sc-if value="{{ showScanning }}" hint-placeholder-val="">
+  <div style="position:absolute; inset:0; background:var(--content); display:flex; align-items:center; justify-content:center; padding:40px;">
+    <div style="width:100%; max-width:520px;">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:22px;height:22px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+        <div style="font-size:20px; font-weight:640;">Scanning…</div>
+      </div>
+      <div class="mono" style="font-size:12px; color:var(--text3); margin-top:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">~/Library/Developer/CoreSimulator/…/data/Containers</div>
+      <div style="display:flex; gap:24px; margin-top:8px; font-size:12px; color:var(--text2);">
+        <span>418,204 entries</span><span>8.3 s elapsed</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; margin-top:22px;">
+        <sc-for list="{{ scanBuckets }}" as="b" hint-placeholder-count="5">
+          <div style="{{ b.style }}">
+            <span style="flex:1; font-size:12.5px;">{{ b.label }}</span>
+            <span class="mono" style="font-size:12px; color:var(--text2);">{{ b.size }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <button onClick="{{ goOverview }}" style="margin-top:22px; font-size:12.5px; color:var(--text2); background:var(--card); border:1px solid var(--card-line); padding:8px 16px; border-radius:7px; cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ SESSION STOPPED ============ -->
+  <sc-if value="{{ showStopped }}" hint-placeholder-val="">
+  <div style="position:absolute; inset:0; background:var(--content); display:flex; align-items:center; justify-content:center; padding:40px;">
+    <div style="width:100%; max-width:420px; text-align:center;">
+      <div style="font-size:22px; font-weight:640;">MacSweep has stopped.</div>
+      <div style="font-size:13px; color:var(--text2); margin-top:8px;">Run the command below in your terminal to start it again.</div>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:18px; background:var(--card); border:1px solid var(--card-line); border-radius:8px; padding:11px 14px;">
+        <span class="mono" style="font-size:13px; flex:1; text-align:left;">macsweep ui</span>
+        <button style="font-size:11.5px; background:var(--accent); color:#fff; border:none; padding:5px 12px; border-radius:5px; cursor:pointer;">Copy</button>
+      </div>
+      <button onClick="{{ restart }}" style="margin-top:20px; font-size:12.5px; color:var(--accent); background:none; border:none; cursor:pointer;">Restart demo</button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ REVIEW MODAL ============ -->
+  <sc-if value="{{ reviewOpen }}" hint-placeholder-val="">
+  <div style="position:absolute; inset:0; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; padding:40px; backdrop-filter:blur(2px);">
+    <div style="width:100%; max-width:560px; max-height:100%; background:var(--win); border-radius:12px; box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column;">
+      <div style="padding:22px 26px 14px;">
+        <div style="font-size:19px; font-weight:660; letter-spacing:-0.02em;">Review plan</div>
+        <div style="font-size:12.5px; color:var(--text2); margin-top:3px;">Nothing is deleted until you confirm. Here's exactly what happens.</div>
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:0 26px;">
+        <sc-for list="{{ reviewGroups }}" as="g" hint-placeholder-count="3">
+          <div style="padding:14px 0; border-top:1px solid var(--border2);">
+            <div style="display:flex; align-items:center; gap:9px;">
+              <span style="{{ g.badgeStyle }}">{{ g.tierLabel }}</span>
+              <span style="font-size:12.5px; font-weight:600; flex:1;">{{ g.action }}</span>
+              <span class="mono" style="font-size:13px; font-weight:600;">{{ g.total }}</span>
+            </div>
+            <div style="font-size:11.5px; color:var(--text3); margin-top:6px;">{{ g.items }}</div>
+          </div>
+        </sc-for>
+        <div style="padding:16px 0; border-top:1px solid var(--border2);">
+          <div style="font-size:12.5px; color:var(--text); margin-bottom:8px;">Type <span class="mono" style="background:var(--card); padding:1px 6px; border-radius:4px;">ios.backups</span> to confirm the Tier 2 deletion:</div>
+          <input value="{{ confirmText }}" onInput="{{ onConfirm }}" placeholder="ios.backups" class="mono" style="width:100%; font-size:13px; padding:9px 12px; border:1px solid var(--border); border-radius:7px; background:var(--content); color:var(--text); outline:none;">
+        </div>
+      </div>
+      <div style="padding:16px 26px; border-top:1px solid var(--border); display:flex; align-items:center; gap:12px;">
+        <button onClick="{{ closeReview }}" style="font-size:13px; background:var(--card); color:var(--text); border:1px solid var(--card-line); padding:10px 18px; border-radius:8px; cursor:pointer;">Cancel</button>
+        <span style="flex:1;"></span>
+        <button onClick="{{ runClean }}" style="{{ cleanBtnStyle }}">Clean {{ selTotal }}</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:856}}">
+class Component extends DCLogic {
+  state = {
+    mode: 'onboarding',      // onboarding | scanning | app | stopped
+    screen: 'overview',      // overview|system|apps|cleanup|history|settings|running|result
+    theme: 'light',
+    appView: 'list',
+    selectedApp: 'slack',
+    selectedBucket: 'coresim',
+    selectedFinding: 'derived',
+    selected: { derived: true, brewcache: true, nodemods: true, iosrt: true, iosbackups: true },
+    reviewOpen: false,
+    confirmText: '',
+    slackRunning: true,
+  };
+
+  badge(t, label) {
+    return { s: { display:'inline-flex', alignItems:'center', gap:'4px', fontSize:'10.5px', fontWeight:600,
+      padding:'2px 8px', borderRadius:'5px', whiteSpace:'nowrap',
+      background:`var(--t${t}-soft)`, color:`var(--t${t}-fg)`, border:`1px solid var(--t${t}-line)` }, l: label };
+  }
+
+  navStyle(key) {
+    const active = this.state.screen === key;
+    return `display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:7px; font-size:13px; font-weight:${active?600:450}; cursor:pointer; color:var(--text); background:${active?'var(--active)':'transparent'};`;
+  }
+
+  go(screen) { this.setState({ screen, mode:'app', reviewOpen:false }); }
+
+  renderVals() {
+    const s = this.state;
+    const B = (t,l) => this.badge(t,l);
+
+    const nav = [
+      ['overview','Overview','◧',''],
+      ['system','System Data','▤','78.2 GB'],
+      ['apps','Apps','▦',''],
+      ['cleanup','Cleanup','✓','21.3 GB'],
+      ['history','History','↺',''],
+      ['settings','Settings','⚙',''],
+    ].map(([k,label,icon,badge]) => ({
+      label, icon, badge, style: this.navStyle(k),
+      go: () => this.go(k),
+    }));
+
+    // ---- disk segments ----
+    const segDefs = [
+      ['Apps','--seg-apps',34,'34 GB',false],
+      ['Developer','--seg-dev',62,'62 GB',false],
+      ['Caches','--seg-cache',18,'18 GB',false],
+      ['Your data','--seg-data',41,'41 GB',false],
+      ['System','--seg-sys',48,'48 GB',false],
+      ['Unmeasured','',12,'12 GB',true],
+      ['Purgeable','--seg-purge',9,'9 GB',false],
+      ['Free','--seg-free',266,'266 GB',false],
+    ];
+    const totalG = segDefs.reduce((a,d)=>a+d[2],0);
+    const segments = segDefs.map(([label,v,g,sizeLabel,hatch]) => {
+      const bg = hatch
+        ? 'repeating-linear-gradient(45deg, var(--text3) 0, var(--text3) 1.5px, transparent 1.5px, transparent 6px)'
+        : `var(${v})`;
+      return {
+        label, sizeLabel, title:`${label} — ${sizeLabel}`,
+        style: { width:`${(g/totalG)*100}%`, background: hatch?bg:`var(${v})`, minWidth:'3px' },
+        dotStyle: { width:'11px', height:'11px', borderRadius:'3px', flex:'none', background: hatch?bg:`var(${v})`, border: hatch?'1px solid var(--border)':'none' },
+      };
+    });
+
+    const largestWins = [
+      ['iOS 26.1 simulator runtime','Unused for 94 days','16.0 GB',1],
+      ['Xcode DerivedData','Rebuilds on next build','8.4 GB',0],
+      ['node_modules in 41 projects','Untouched 14+ days','7.2 GB',1],
+      ['Homebrew download cache','brew cleanup -s','1.9 GB',1],
+      ['Docker build cache','docker builder prune','3.1 GB',0],
+    ].map(([title,detail,size,t]) => ({ title, detail, size, tierLabel:B(t,'').l||['Regenerates','Re-download','Your data','Protected'][t], badgeStyle:B(t).s, go:()=>this.go('cleanup') }));
+    largestWins.forEach((w,i)=>{ w.tierLabel = ['Regenerates','Re-download','Your data','Protected'][[1,0,1,1,0][i]]; });
+
+    // ---- system data buckets ----
+    const sbDefs = [
+      ['coresim','CoreSimulator runtimes & devices','iOS/watchOS runtime images and test devices','39.1 GB',1,39.1,
+        '/Library/Developer/CoreSimulator',
+        'Simulator runtimes are downloaded disk images for building iOS apps. The 16 GB iOS 26.1 runtime hasn\u2019t been used in 94 days.',
+        'Safe. Deleting a runtime frees it immediately; Xcode re-downloads it (~2\u20134 GB) only if you target that iOS version again.','',true],
+      ['var','/private/var (swap, databases, temp)','Managed by macOS','7.7 GB',3,7.7,
+        '/private/var',
+        'Swap files, system databases and temporary files. macOS manages the size of these automatically.',
+        'Protected. MacSweep never touches these \u2014 deleting them can corrupt the system.','',false],
+      ['brew','Homebrew (/opt/homebrew)','Installed packages + download cache','5.0 GB',1,5.0,
+        '/opt/homebrew',
+        'Homebrew formulae plus a download cache of old bottle archives.',
+        'The download cache (~1.9 GB) is safe to clear with brew cleanup. Installed packages themselves are kept.','',true],
+      ['chrome','Chrome on-device AI model','Downloaded silently by Chrome','4.0 GB',1,4.0,
+        '~/Library/Application Support/Google/Chrome/OptGuideOnDeviceModel',
+        'A 4 GB on-device AI model Chrome downloaded in the background.',
+        'Safe to delete. Chrome will re-download it (~4 GB) unless you disable the feature via policy.','defaults write com.google.Chrome GenAILocalFoundationalModelSettings -int 1',true],
+      ['snapshots','Local Time Machine snapshots','3 snapshots','—',3,2.0,
+        'APFS local snapshots',
+        'Three local Time Machine snapshots. Their size can\u2019t be measured without root.',
+        'Protected. Size not measurable without root \u2014 use the copy-paste command to thin them yourself.','tmutil thinlocalsnapshots / 20000000000 4',false],
+      ['unmeasured','Unmeasured (protected / needs root)','Couldn\u2019t be read','11.6 GB',3,11.6,
+        'various',
+        'Areas MacSweep couldn\u2019t read: SIP-protected paths and folders that need root. Shown as a hatched bucket so the total always adds up honestly.',
+        'Not actionable. These bytes exist but can\u2019t be safely inspected without elevated access.','',false],
+    ];
+    const sysBuckets = sbDefs.map(d => {
+      const [id,name,note,size,t,g,path,what,safe,command,reviewable] = d;
+      const pct = Math.min(100,(g/39.1)*100);
+      return {
+        id, name, note, size, tierLabel:['Regenerates','Re-download','Your data','Protected'][t], badgeStyle:B(t).s,
+        rowStyle:`background:var(--card); border:1px solid ${s.selectedBucket===id?'var(--sel-line)':'var(--card-line)'}; border-radius:10px; padding:14px 16px; cursor:pointer;`,
+        barBg:'background:var(--border2);',
+        barFill:{ width:`${pct}%`, height:'100%', borderRadius:'3px', background:`var(--t${t}-dot)` },
+        path, what, safe, command, reviewable,
+        go: () => this.setState({ selectedBucket:id }),
+      };
+    });
+    const sysSel = sysBuckets.find(b=>b.id===s.selectedBucket);
+
+    // ---- apps ----
+    const appDefs = [
+      ['spotify','Spotify','S','com.spotify.client · v1.2.3','2 days ago',false,false,'3.1 GB','1.1 GB','4.2 GB','#1db954'],
+      ['teams','Microsoft Teams','T','com.microsoft.teams2 · v24.9','5 days ago',false,false,'2.6 GB','780 MB','3.4 GB','#5059c9'],
+      ['slack','Slack','S','com.tinyspeck.slackmacgap · v4.38','now',true,false,'1.8 GB','2.4 GB','4.2 GB','#4a154b'],
+      ['discord','Discord','D','com.hnc.Discord · v0.0.3','yesterday',false,false,'1.2 GB','340 MB','1.5 GB','#5865f2'],
+      ['vscode','Visual Studio Code','V','com.microsoft.VSCode · v1.93','now',true,false,'940 MB','1.9 GB','2.8 GB','#0078d4'],
+      ['figma','Figma','F','com.figma.Desktop · v124.3','3 days ago',false,false,'610 MB','420 MB','1.0 GB','#a259ff'],
+      ['zoom','Zoom','Z','us.zoom.xos · v6.1','1 week ago',false,false,'220 MB','160 MB','380 MB','#2d8cff'],
+      ['orphan','com.tinyspeck.old-app','?','com.tinyspeck.old-app · uninstalled','unknown',false,true,'400 MB','0 MB','400 MB','#8a8a90'],
+    ];
+    const apps = appDefs.map(d => {
+      const [id,name,initial,sub,lastUsed,running,orphan,caches,appData,total,color] = d;
+      return { id,name,initial,sub,lastUsed,running,orphan,caches,appData,total,
+        iconBg:{ background: orphan?'var(--t3-dot)':color },
+        go: () => this.setState({ screen:'apps', appView:'detail', selectedApp:id }),
+      };
+    });
+    const appFilters = ['All','Has caches to clean','Running','Not used in 90+ days','Orphaned data'].map((label,i)=>({
+      label, style:`font-size:12px; padding:5px 12px; border-radius:14px; cursor:pointer; border:1px solid var(--card-line); color:${i===0?'var(--accent-fg)':'var(--text2)'}; background:${i===0?'var(--accent)':'var(--card)'};`,
+    }));
+
+    // slack detail groups
+    const appGroups = [
+      { name:'Caches', size:'1.8 GB', tierLabel:'Regenerates', badgeStyle:B(0).s, note:'Slack rebuilds these when it opens. You stay signed in. Includes Cache, Code Cache, GPUCache and Service Worker.', noAction:'' },
+      { name:'Logs', size:'120 MB', tierLabel:'Re-download', badgeStyle:B(1).s, note:'Diagnostic history only.', noAction:'' },
+      { name:'Sign-in & site data', size:'64 MB', tierLabel:'Your data', badgeStyle:B(2).s, note:'Deleting this would sign you out.', noAction:'Report only — no checkbox.' },
+      { name:'App data', size:'2.4 GB', tierLabel:'Your data', badgeStyle:B(2).s, note:'Your messages, downloads and workspaces.', noAction:'Report only — Show in Finder.' },
+      { name:'Settings', size:'12 KB', tierLabel:'Protected', badgeStyle:B(3).s, note:'Preferences plist.', noAction:'Protected.' },
+    ];
+    const appD = {
+      ...(apps.find(a=>a.id===s.selectedApp)||apps[2]),
+      running: s.selectedApp==='slack' ? s.slackRunning : (apps.find(a=>a.id===s.selectedApp)||{}).running,
+      cleanSize:'1.9 GB',
+    };
+    appD.cleanable = !appD.running;
+
+    // ---- cleanup ----
+    const findDefs = [
+      [0,'Developer','derived','Xcode DerivedData','~/Library/Developer/Xcode/DerivedData','8.4 GB',null,false,false,
+        'DerivedData holds build intermediates and indexes. Xcode regenerates it on your next build.',
+        'A clean build of your projects — a few minutes of compile time. No network needed.',
+        'rm -rf ~/Library/Developer/Xcode/DerivedData/*',['~/Library/Developer/Xcode/DerivedData']],
+      [0,'System','dockerbuild','Docker build cache','docker builder prune','3.1 GB',null,true,false,
+        'Layer cache from Docker image builds.','Slower first build of each image; layers rebuild locally.',
+        'docker builder prune -f',['(managed by docker)']],
+      [1,'Developer','iosrt','iOS 26.1 simulator runtime','iOS 26.1 (23B86), unused 94 days','16.0 GB',null,false,false,
+        'A downloaded simulator runtime image. No user data lives here.','Xcode re-downloads it (~2–4 GB) if you target iOS 26.1 again.',
+        'xcrun simctl runtime delete 3F2A1C8E-…',['/Library/Developer/CoreSimulator/Images']],
+      [1,'System','brewcache','Homebrew download cache','~/Library/Caches/Homebrew','1.9 GB',null,false,false,
+        'Old bottle archives already installed.','brew re-downloads a bottle only if you reinstall that formula.',
+        'brew cleanup -s',['~/Library/Caches/Homebrew']],
+      [1,'Developer','nodemods','node_modules in 41 projects','untouched 14+ days · lockfiles present','7.2 GB',null,false,false,
+        'Reinstallable dependencies in projects you haven\u2019t touched in 2+ weeks. Each has a lockfile, so versions are pinned.','npm/pnpm install per project — network + a minute each.',
+        'rm -rf <project>/node_modules  (×41)',['41 project folders']],
+      [1,'Developer','dyld','Simulator dyld cache','needs root','2.3 GB',null,false,true,
+        'Shared dynamic linker cache for simulators.','Rebuilt automatically by the simulator.',
+        'sudo rm -rf /Library/Developer/CoreSimulator/Caches/dyld',['/Library/Developer/CoreSimulator/Caches/dyld']],
+      [2,'Your data','iosbackups','iOS device backups','2 devices','1.4 GB',null,false,false,
+        'Local backups of iOS devices. This is your data, so it moves to the Trash.','Only recoverable from the Trash, or by re-backing-up the device.',
+        'trash ~/Library/Application Support/MobileSync/Backup/*',['~/Library/Application Support/MobileSync/Backup']],
+      [3,'System','dockervol','Docker volumes (4)','Databases live here','2.2 GB',null,false,false,
+        'Named Docker volumes — Postgres, Redis and MySQL data. MacSweep never deletes these.','Not applicable — protected.',
+        '(review in Docker)',['(docker volumes)']],
+    ];
+    const tierDesc = {
+      0:'Deleted permanently — rebuilds automatically',
+      1:'Deleted permanently — re-downloads when needed',
+      2:'Moved to Trash — you can undo',
+      3:'Explained only — never actionable',
+    };
+    const tierName = ['Regenerates','Re-download','Your data','Protected'];
+    const tierShort = ['Tier 0','Tier 1','Tier 2','Tier 3'];
+    const findings = findDefs.map(d => {
+      const [tier,cat,id,title,detail,size,_x,blocked,rootCmd,why,cost,action,paths] = d;
+      return { tier,cat,id,title,detail,size,blocked: blocked?'Docker is running':'', rootCmd, why, cost, action, paths,
+        tierLabel: tierName[tier], tierShort: tierShort[tier], badgeStyle:B(tier).s };
+    });
+    const groups = [0,1,2,3].map(t => {
+      const items = findings.filter(f=>f.tier===t).map(f => {
+        const checked = !!s.selected[f.id];
+        const canCheck = f.tier!==3 && !f.rootCmd;
+        return { ...f,
+          checkbox: canCheck,
+          check: checked?'✓':'',
+          boxStyle:`width:18px;height:18px;border-radius:5px;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;cursor:pointer;border:1.5px solid ${checked?'var(--accent)':'var(--border)'};background:${checked?'var(--accent)':'transparent'};`,
+          rowStyle:`display:flex; align-items:center; gap:11px; padding:11px 14px; border-radius:9px; cursor:pointer; border:1px solid ${s.selectedFinding===f.id?'var(--sel-line)':'var(--card-line)'}; background:${s.selectedFinding===f.id?'var(--sel)':'var(--card)'};`,
+          toggle: (e) => { e.stopPropagation(); this.setState(st => ({ selected: { ...st.selected, [f.id]: !st.selected[f.id] }, selectedFinding:f.id })); },
+          go: () => this.setState({ selectedFinding:f.id }),
+        };
+      });
+      const sum = items.filter(i=>s.selected[i.id]).reduce((a,i)=>a+parseFloat(i.size),0);
+      return { tier:t, tierLabel:tierName[t], badgeStyle:B(t).s, desc:tierDesc[t], items,
+        total: sum>0 ? `${sum.toFixed(1)} GB selected` : '' };
+    }).filter(g=>g.items.length>0);
+
+    const findSel = findings.find(f=>f.id===s.selectedFinding);
+    const cleanupCats = ['All','Developer','System','Browser','Your data'].map((label,i)=>({
+      label, style:`font-size:12.5px; padding:7px 10px; border-radius:7px; margin-bottom:2px; cursor:pointer; color:var(--text); background:${i===0?'var(--active)':'transparent'}; font-weight:${i===0?600:450};`,
+    }));
+
+    const selItems = findings.filter(f => s.selected[f.id]);
+    const selTotalNum = selItems.reduce((a,f)=>a+parseFloat(f.size),0);
+    const selTotal = `${selTotalNum.toFixed(1)} GB`;
+    const selCount = selItems.length;
+
+    // review groups
+    const rg = [
+      [0,'Deleted permanently (rebuilds automatically)', selItems.filter(f=>f.tier===0)],
+      [1,'Deleted permanently (re-downloads when needed)', selItems.filter(f=>f.tier===1)],
+      [2,'Moved to Trash (you can undo)', selItems.filter(f=>f.tier===2)],
+    ].filter(([t,a,items])=>items.length>0).map(([t,action,items])=>({
+      tierLabel:tierName[t], badgeStyle:B(t).s, action,
+      total:`${items.reduce((a,i)=>a+parseFloat(i.size),0).toFixed(1)} GB`,
+      items: items.map(i=>i.title).join(' · '),
+    }));
+
+    const hasTier2 = selItems.some(f=>f.tier===2);
+    const confirmOk = !hasTier2 || s.confirmText.trim()==='ios.backups';
+    const cleanBtnStyle = `font-size:13.5px; font-weight:600; border:none; padding:10px 20px; border-radius:8px; cursor:${confirmOk?'pointer':'not-allowed'}; background:${confirmOk?'var(--accent)':'var(--border)'}; color:${confirmOk?'var(--accent-fg)':'var(--text3)'};`;
+    const reviewBtnStyle = `font-size:13px; font-weight:600; border:none; padding:9px 18px; border-radius:8px; cursor:${selCount>0?'pointer':'not-allowed'}; background:${selCount>0?'var(--accent)':'var(--border)'}; color:${selCount>0?'var(--accent-fg)':'var(--text3)'};`;
+
+    // running / result
+    const runItems = [
+      ['Xcode DerivedData','8.4 GB','8.4 GB'],
+      ['iOS 26.1 simulator runtime','16.0 GB','16.0 GB'],
+      ['Homebrew download cache','1.9 GB','1.9 GB'],
+      ['node_modules (41 projects)','7.2 GB','7.1 GB'],
+      ['iOS device backups → Trash','1.4 GB','1.4 GB'],
+    ].map(([title,size,freed],i)=>({ title, size, freed, icon:'✓', status:'Done',
+      iconStyle:{ color:'var(--t0-dot)', fontSize:'14px' } }));
+
+    const scanBuckets = [
+      ['Developer caches','done','24.9 GB'],
+      ['App caches','done','9.4 GB'],
+      ['System Data','scanning','—'],
+      ['Downloads','queued',''],
+      ['Browser data','queued',''],
+    ].map(([label,st,size])=>({ label, size, style:`display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--card-line); border-radius:8px; padding:11px 14px; ${st==='queued'?'animation:skel 1.4s ease-in-out infinite;':''}` }));
+
+    const history = [
+      { date:'Today, 2:14 PM', items:'5', freed:'20.8 GB', undoable:true, reason:'' },
+      { date:'Sep 12, 9:03 AM', items:'3', freed:'11.2 GB', undoable:false, reason:'Rebuilds automatically' },
+      { date:'Sep 4, 6:41 PM', items:'8', freed:'32.6 GB', undoable:false, reason:'Trash was emptied' },
+    ];
+
+    return {
+      theme: s.theme,
+      themeLabel: s.theme==='dark' ? 'Light' : 'Dark',
+      toggleTheme: () => this.setState(st=>({ theme: st.theme==='dark'?'light':'dark' })),
+      stopServer: () => this.setState({ mode:'stopped' }),
+      restart: () => this.setState({ mode:'onboarding' }),
+      startScan: () => { this.setState({ mode:'scanning' }); setTimeout(()=>this.setState({ mode:'app', screen:'overview' }), 2200); },
+      goOverview: () => this.go('overview'),
+      goCleanup: () => this.go('cleanup'),
+      goHistory: () => this.go('history'),
+      navItems: nav,
+      fdaDot: s.theme, fdaLabel:'Limited',
+      fdaDot:'var(--t2-dot)',
+
+      showOnboarding: s.mode==='onboarding',
+      showScanning: s.mode==='scanning',
+      showStopped: s.mode==='stopped',
+
+      isOverview: s.mode==='app' && s.screen==='overview',
+      isSystem: s.mode==='app' && s.screen==='system',
+      isApps: s.mode==='app' && s.screen==='apps',
+      isCleanup: s.mode==='app' && s.screen==='cleanup',
+      isHistory: s.mode==='app' && s.screen==='history',
+      isSettings: s.mode==='app' && s.screen==='settings',
+      isRunning: s.mode==='app' && s.screen==='running',
+      isResult: s.mode==='app' && s.screen==='result',
+
+      segments, largestWins,
+      sysBuckets, sysSel,
+      apps, appFilters,
+      appsListMode: s.appView==='list',
+      appDetailMode: s.appView==='detail',
+      appGroups, appD,
+      backToApps: () => this.setState({ appView:'list' }),
+      quitApp: () => this.setState({ slackRunning:false }),
+
+      cleanupGroups: groups, cleanupCats, findSel,
+      selCount, selTotal, reviewBtnStyle,
+
+      openReview: () => this.setState({ reviewOpen:true }),
+      closeReview: () => this.setState({ reviewOpen:false, confirmText:'' }),
+      reviewOpen: s.reviewOpen,
+      reviewGroups: rg,
+      confirmText: s.confirmText,
+      onConfirm: (e) => this.setState({ confirmText: e.target.value }),
+      cleanBtnStyle,
+      runClean: () => { if(!confirmOk) return; this.setState({ reviewOpen:false, screen:'running', mode:'app' }); setTimeout(()=>this.setState({ screen:'result' }), 2400); },
+
+      runItems, scanBuckets, history,
+    };
+  }
+}
+</script>
+</body>
+</html>
