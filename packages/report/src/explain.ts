@@ -1,4 +1,4 @@
-import type { SystemDataBucket, SystemDataReport, Tier } from '@macsweep/core';
+import type { SystemDataBucket, SystemDataReport, Tier } from '@diskwise/core';
 import { formatBytes } from './format-bytes';
 
 const BAR_WIDTH = 24;
@@ -16,7 +16,7 @@ const MIXED_COLOR = '\x1b[36m';
 
 const UNMEASURED_TITLE = 'Unmeasured';
 const UNMEASURED_EXPLANATION =
-  'Protected areas, admin-only folders and snapshots. macOS keeps them from being read, so macsweep reports the gap instead of guessing.';
+  'Protected areas, admin-only folders and snapshots. macOS keeps them from being read, so diskwise reports the gap instead of guessing.';
 
 export interface ExplainOptions {
   color?: boolean;

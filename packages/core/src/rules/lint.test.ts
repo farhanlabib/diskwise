@@ -16,8 +16,8 @@ interface Overrides {
 const base: Overrides = {
   tier: 1,
   action: null,
-  roots: ['/tmp/macsweep-lint'],
-  matcher: { kind: 'glob-children', root: '/tmp/macsweep-lint' },
+  roots: ['/tmp/diskwise-lint'],
+  matcher: { kind: 'glob-children', root: '/tmp/diskwise-lint' },
 };
 
 function dangerous(id: string, overrides: Partial<Overrides>): Rule {
@@ -127,14 +127,14 @@ describe('lintRule', () => {
 
   it('(g) rejects a path outside the rule roots', () => {
     const messages = lintRule(
-      dangerous('g.outside', { matcher: { kind: 'path', path: '/tmp/macsweep-elsewhere/x' } }),
+      dangerous('g.outside', { matcher: { kind: 'path', path: '/tmp/diskwise-elsewhere/x' } }),
     );
     expect(messages.some((m) => m.includes("not inside any of the rule's roots"))).toBe(true);
   });
 
   it('(g) accepts a target inside a declared root', () => {
     const messages = lintRule(
-      dangerous('g.inside', { matcher: { kind: 'path', path: '/tmp/macsweep-lint/sub' } }),
+      dangerous('g.inside', { matcher: { kind: 'path', path: '/tmp/diskwise-lint/sub' } }),
     );
     expect(messages).toEqual([]);
   });
@@ -142,7 +142,7 @@ describe('lintRule', () => {
   it('(g) rejects a versioned-children root outside the rule roots', () => {
     const messages = lintRule(
       dangerous('g.versioned-outside', {
-        matcher: { kind: 'versioned-children', root: '/tmp/macsweep-elsewhere', keepNewest: 2 },
+        matcher: { kind: 'versioned-children', root: '/tmp/diskwise-elsewhere', keepNewest: 2 },
       }),
     );
     expect(messages.some((m) => m.includes("not inside any of the rule's roots"))).toBe(true);
@@ -151,7 +151,7 @@ describe('lintRule', () => {
   it('(g) accepts a versioned-children root inside a declared root', () => {
     const messages = lintRule(
       dangerous('g.versioned-inside', {
-        matcher: { kind: 'versioned-children', root: '/tmp/macsweep-lint/sub', keepNewest: 2 },
+        matcher: { kind: 'versioned-children', root: '/tmp/diskwise-lint/sub', keepNewest: 2 },
       }),
     );
     expect(messages).toEqual([]);

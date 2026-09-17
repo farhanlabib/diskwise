@@ -4,10 +4,10 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
-import { executePlan } from '@macsweep/core';
-import type { AppReport, CleanupPlan } from '@macsweep/core/types';
-import { formatBytes } from '@macsweep/report';
-import type { ServerHandle, StartServerOptions } from '@macsweep/server';
+import { executePlan } from '@diskwise/core';
+import type { AppReport, CleanupPlan } from '@diskwise/core/types';
+import { formatBytes } from '@diskwise/report';
+import type { ServerHandle, StartServerOptions } from '@diskwise/server';
 import { promptImpl } from '../prompt';
 import type { IO } from '../program';
 import { registerAppsCommand } from './apps';
@@ -95,11 +95,11 @@ function harness(deps: Parameters<typeof registerAppsCommand>[2] = {}, isTTY = f
   program.exitOverride();
   program.configureOutput({ writeOut: (s) => out.push(s), writeErr: (s) => err.push(s) });
   registerAppsCommand(program, io, deps);
-  return { out, err, run: (argv: string[]) => program.parseAsync(['node', 'macsweep', ...argv]) };
+  return { out, err, run: (argv: string[]) => program.parseAsync(['node', 'diskwise', ...argv]) };
 }
 
 function uiHarness(deps: {
-  start: typeof import('@macsweep/server').startServer;
+  start: typeof import('@diskwise/server').startServer;
   open: (url: string) => Promise<void>;
 }) {
   const out: string[] = [];
@@ -109,14 +109,14 @@ function uiHarness(deps: {
   program.exitOverride();
   program.configureOutput({ writeOut: (s) => out.push(s), writeErr: (s) => err.push(s) });
   registerUiCommand(program, io, deps);
-  return { out, err, run: (argv: string[]) => program.parseAsync(['node', 'macsweep', ...argv]) };
+  return { out, err, run: (argv: string[]) => program.parseAsync(['node', 'diskwise', ...argv]) };
 }
 
 // An applied clean opens a journal under the home dir, so point HOME at a temp dir
 // for those tests instead of writing into the real one.
 async function withTempHome<T>(fn: () => Promise<T>): Promise<T> {
   const previous = process.env.HOME;
-  const home = await mkdtemp(join(tmpdir(), 'macsweep-cli-home-'));
+  const home = await mkdtemp(join(tmpdir(), 'diskwise-cli-home-'));
   tempDirs.push(home);
   process.env.HOME = home;
   try {
@@ -128,7 +128,7 @@ async function withTempHome<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 async function orphanDirs(): Promise<{ cachePath: string; dataPath: string }> {
-  const dir = await mkdtemp(join(tmpdir(), 'macsweep-orphans-clean-'));
+  const dir = await mkdtemp(join(tmpdir(), 'diskwise-orphans-clean-'));
   tempDirs.push(dir);
   const cachePath = join(dir, 'caches');
   const dataPath = join(dir, 'data');
@@ -201,7 +201,7 @@ describe('apps command', () => {
   });
 
   it('runs a dry run without --apply', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'macsweep-apps-'));
+    const dir = await mkdtemp(join(tmpdir(), 'diskwise-apps-'));
     tempDirs.push(dir);
     await writeFile(join(dir, 'cache.bin'), 'x');
 

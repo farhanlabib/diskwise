@@ -41,7 +41,7 @@ await copyTree(
 );
 
 await copyFile(
-  path.join(repoRoot, 'packages', 'native-helper', 'bin', 'macsweep-helper'),
-  path.join(distDir, 'macsweep-helper'),
-  'native helper (packages/native-helper/bin/macsweep-helper)',
+  path.join(repoRoot, 'packages', 'native-helper', 'bin', 'diskwise-helper'),
+  path.join(distDir, 'diskwise-helper'),
+  'native helper (packages/native-helper/bin/diskwise-helper)',
 );

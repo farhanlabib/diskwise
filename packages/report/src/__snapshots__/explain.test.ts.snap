@@ -13,7 +13,7 @@ Local Time Machine snapshots                                 0 B
     Local Time Machine snapshots. Their size can't be measured without admin rights.
     $ tmutil thinlocalsnapshots / 10000000000 4
 Unmeasured                   █████████                    3.8 GB
-    Protected areas, admin-only folders and snapshots. macOS keeps them from being read, so macsweep reports the gap instead of guessing.
+    Protected areas, admin-only folders and snapshots. macOS keeps them from being read, so diskwise reports the gap instead of guessing.
 
 Measured 6.2 GB of 10.0 GB
 "

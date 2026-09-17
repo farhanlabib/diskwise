@@ -1,4 +1,4 @@
-# Contributing to macsweep
+# Contributing to diskwise
 
 Thanks for helping make disk cleanup honest. There are two main ways to contribute: **add a cleanup rule** and **add an app profile**. Both are declarative data, not code, so they can be reviewed safely.
 
@@ -22,12 +22,12 @@ pnpm format                         # prettier --write
 
 ```
 packages/
-  core/           @macsweep/core — the entire engine (fs, sources, probes, rules, apps, scan, plan, execute, safety)
+  core/           @diskwise/core — the entire engine (fs, sources, probes, rules, apps, scan, plan, execute, safety)
   native-helper/  Swift CLI: trash, privatesize, capacity, running-apps, quit-app, icons
-  report/         @macsweep/report — table, json, and markdown formatters
-  server/         @macsweep/server — loopback-only HTTP + SSE API over core
-  ui/             @macsweep/ui — React + Vite + Tailwind, built to static assets
-  cli/            macsweep — the published binary (bundles server, ui assets, helper)
+  report/         @diskwise/report — table, json, and markdown formatters
+  server/         @diskwise/server — loopback-only HTTP + SSE API over core
+  ui/             @diskwise/ui — React + Vite + Tailwind, built to static assets
+  cli/            diskwise — the published binary (bundles server, ui assets, helper)
 fixtures/         trees/ (synthetic filesystems), probes/ (recorded vendor output), baseline/ (redacted audit)
 docs/             architecture.md, safety-model.md, system-data.md, app-profiles.md
 ```
@@ -65,7 +65,7 @@ export const derivedData: Rule = {
 
 ## Add an app profile
 
-An app profile teaches macsweep which folders are an app's caches and which are its data. Profiles compile into rules (category `app`), so they go through the same roots, tiers, preflight, and journal as everything else.
+An app profile teaches diskwise which folders are an app's caches and which are its data. Profiles compile into rules (category `app`), so they go through the same roots, tiers, preflight, and journal as everything else.
 
 Profiles live in `packages/core/src/apps/profiles/*.ts`. A profile lists exact cache subpaths with their tier and rationale, extra app-specific locations, the processes to check in preflight, and the sign-in and data folders that are **never** actionable. Profiles take precedence over the generic heuristic, and nothing outside the whitelisted cache folder names is ever actionable.
 

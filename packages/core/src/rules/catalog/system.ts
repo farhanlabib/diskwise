@@ -11,7 +11,7 @@ export const systemRules: Rule[] = [
     matcher: { kind: 'path', path: '/private/var/vm' },
     action: null,
     rationale:
-      'macOS manages swap and virtual-memory here and pages to it while you work; deleting these files while the machine runs would corrupt memory state, so macsweep only reports their size.',
+      'macOS manages swap and virtual-memory here and pages to it while you work; deleting these files while the machine runs would corrupt memory state, so diskwise only reports their size.',
     regeneration:
       'macOS recreates swap files automatically as memory pressure returns after a reboot.',
   },
@@ -39,7 +39,7 @@ export const systemRules: Rule[] = [
     matcher: { kind: 'path', path: '~/Library/Keychains' },
     action: null,
     rationale:
-      'Your keychains hold saved passwords, certificates and encryption keys; losing them can lock you out of accounts and encrypted volumes, so macsweep never touches them.',
+      'Your keychains hold saved passwords, certificates and encryption keys; losing them can lock you out of accounts and encrypted volumes, so diskwise never touches them.',
     regeneration:
       'Not regenerable — a keychain removed without a backup is gone, and each password would have to be re-entered by hand.',
   },

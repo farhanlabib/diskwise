@@ -12,7 +12,7 @@ const TOLERANCE = 128 * KB;
 const roots: string[] = [];
 
 async function makeHome(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'macsweep-apps-report-'));
+  const dir = await mkdtemp(join(tmpdir(), 'diskwise-apps-report-'));
   roots.push(dir);
   return dir;
 }

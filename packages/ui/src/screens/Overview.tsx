@@ -5,7 +5,7 @@ import { disk as mockDisk, largestWins, segments as mockSegments, traps as mockT
 import { useMock } from '../api/client';
 import { useScan } from '../api/hooks';
 import { overviewFromAudit } from '../lib/derive';
-import { formatBytes } from '../lib/format';
+import { formatBytes, middleTruncate } from '../lib/format';
 
 function trapTitle(path: string): string {
   const segment = path.split('/').filter(Boolean).pop() ?? path;
@@ -27,7 +27,10 @@ export function Overview({ onNavigate }: { onNavigate: (hash: string) => void })
     <div className="flex-1 overflow-y-auto px-[36px] py-[32px]">
       <div className="text-[13px] [font-weight:500] text-text2">Overview</div>
       <div className="mt-[6px] flex items-baseline gap-[14px]">
-        <div className="text-[40px] [font-weight:680] tracking-[-0.02em]">
+        <div
+          data-testid="reclaimable-headline"
+          className="text-[40px] [font-weight:680] tracking-[-0.02em]"
+        >
           {formatBytes(data.reclaimable)}
         </div>
         <div className="text-[17px] [font-weight:500] text-text2">reclaimable</div>
@@ -64,7 +67,9 @@ export function Overview({ onNavigate }: { onNavigate: (hash: string) => void })
                   <div className="text-[13.5px] [font-weight:550] tracking-[-0.01em]">
                     {win.title}
                   </div>
-                  <div className="mt-[2px] text-[11.5px] text-text3">{win.detail}</div>
+                  <div className="mt-[2px] truncate text-[11.5px] text-text3" title={win.detail}>
+                    {middleTruncate(win.detail, 46)}
+                  </div>
                 </div>
                 <div className="min-w-[64px] text-right font-mono text-[14px] [font-weight:600]">
                   {formatBytes(win.sizeBytes)}

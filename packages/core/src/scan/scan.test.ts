@@ -3,7 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { ProbeRunner, Rule } from '../types';
-import { scan } from './scan';
+import { treeSize } from '../native/helper';
+import { audit, scan } from './scan';
 import { isTrap } from './traps';
 
 const noProbe: ProbeRunner = async () => ({ stdout: '', stderr: '', exitCode: 127 });
@@ -19,7 +20,7 @@ describe('scan', () => {
   let home: string;
 
   beforeAll(async () => {
-    home = await realpath(await mkdtemp(join(tmpdir(), 'macsweep-scan-')));
+    home = await realpath(await mkdtemp(join(tmpdir(), 'diskwise-scan-')));
     const derived = join(home, 'Library/Developer/Xcode/DerivedData');
     await mkdir(join(derived, 'App-abc'), { recursive: true });
     await writeFile(join(derived, 'App-abc/blob'), Buffer.alloc(2_000_000, 1));
@@ -104,5 +105,116 @@ describe('scan', () => {
   it('flags sparse traps only when apparent size far exceeds allocated', () => {
     expect(isTrap(2.7e9, 228e9)).toBe(true);
     expect(isTrap(10e9, 12e9)).toBe(false);
+  });
+});
+
+function fakeTree(privateSize: number): typeof treeSize {
+  return async (targetPath) => ({
+    path: targetPath,
+    allocated: 0,
+    privateSize,
+    entries: 0,
+    unreadable: [],
+    truncated: false,
+    privateSizeSupported: true,
+  });
+}
+
+describe('scan clone-aware reclaimable', () => {
+  let home: string;
+  const derivedRule: Rule = {
+    ...base,
+    id: 'test.derived',
+    title: 'Derived',
+    tier: 0,
+    roots: ['~/Library/Developer/Xcode/DerivedData'],
+    matcher: { kind: 'glob-children', root: '~/Library/Developer/Xcode/DerivedData' },
+    action: 'remove-path',
+    minBytes: 1,
+  };
+
+  beforeAll(async () => {
+    home = await realpath(await mkdtemp(join(tmpdir(), 'diskwise-scan-clone-')));
+    const derived = join(home, 'Library/Developer/Xcode/DerivedData');
+    for (const [name, bytes] of [
+      ['App-abc', 2_000_000],
+      ['App-def', 1_000_000],
+    ] as const) {
+      await mkdir(join(derived, name), { recursive: true });
+      await writeFile(join(derived, name, 'blob'), Buffer.alloc(bytes, 1));
+    }
+  });
+
+  afterAll(async () => {
+    await rm(home, { recursive: true, force: true });
+  });
+
+  it('uses the native private size as bytesReclaimable and finding reclaimable', async () => {
+    const { findings } = await scan({ home, rules: [derivedRule], run: noProbe, treeSize: fakeTree(1000) });
+    const derived = findings.find((f) => f.ruleId === 'test.derived');
+    expect(derived?.matches).toHaveLength(2);
+    expect(derived?.matches.every((m) => m.bytesReclaimable === 1000)).toBe(true);
+    expect(derived?.totals.reclaimable).toBe(2000);
+  });
+
+  it('falls back per match when the native walk fails, and sums allocated for that match', async () => {
+    const partial = (async (targetPath: string) => {
+      if (targetPath.endsWith('App-def')) throw new Error('boom');
+      return {
+        path: targetPath,
+        allocated: 0,
+        privateSize: 1000,
+        entries: 0,
+        unreadable: [],
+        truncated: false,
+        privateSizeSupported: true,
+      };
+    }) as typeof treeSize;
+
+    const { findings } = await scan({ home, rules: [derivedRule], run: noProbe, treeSize: partial });
+    const derived = findings.find((f) => f.ruleId === 'test.derived');
+    const failed = derived?.matches.find((m) => m.path?.endsWith('App-def'));
+    const sized = derived?.matches.find((m) => m.path?.endsWith('App-abc'));
+    expect(failed?.bytesReclaimable).toBeUndefined();
+    expect(derived?.totals.reclaimable).toBe(1000 + (failed?.bytesAllocated ?? 0));
+    expect(derived?.totals.reclaimable).toBeLessThan(derived?.totals.allocated ?? 0);
+    expect(sized?.bytesReclaimable).toBe(1000);
+  });
+
+  it('leaves reclaimable undefined and audit falls back to allocated when every walk fails', async () => {
+    const throwing = (async () => {
+      throw new Error('boom');
+    }) as typeof treeSize;
+    const result = await audit({ home, rules: [derivedRule], run: noProbe, treeSize: throwing });
+    const derived = result.findings.find((f) => f.ruleId === 'test.derived');
+    expect(derived?.matches[0]?.bytesReclaimable).toBeUndefined();
+    expect(derived?.totals.reclaimable).toBeUndefined();
+    expect(result.totals.reclaimable).toBe(derived?.totals.allocated);
+  });
+
+  it('skips the native walk entirely with clonesAware: false', async () => {
+    let calls = 0;
+    const counting = (async (targetPath: string) => {
+      calls += 1;
+      return {
+        path: targetPath,
+        allocated: 0,
+        privateSize: 0,
+        entries: 0,
+        unreadable: [],
+        truncated: false,
+        privateSizeSupported: true,
+      };
+    }) as typeof treeSize;
+
+    const { findings } = await scan({
+      home,
+      rules: [derivedRule],
+      run: noProbe,
+      treeSize: counting,
+      clonesAware: false,
+    });
+    expect(calls).toBe(0);
+    expect(findings[0]?.totals.reclaimable).toBeUndefined();
   });
 });

@@ -14,7 +14,7 @@ body:
     id: bundle-id
     attributes:
       label: Bundle id
-      description: From `Contents/Info.plist` (`CFBundleIdentifier`), or `macsweep apps show <name>`.
+      description: From `Contents/Info.plist` (`CFBundleIdentifier`), or `diskwise apps show <name>`.
       placeholder: com.tinyspeck.slackmacgap
     validations:
       required: true

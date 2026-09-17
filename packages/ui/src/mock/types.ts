@@ -1,4 +1,4 @@
-import type { Tier } from '@macsweep/core/types';
+import type { Tier } from '@diskwise/core/types';
 
 export interface AppEntry {
   id: string;

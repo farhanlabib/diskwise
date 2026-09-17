@@ -1,4 +1,4 @@
-import type { AuditResult, Finding, Trap, UnreadableEntry } from '@macsweep/core';
+import type { AuditResult, Finding, Trap, UnreadableEntry } from '@diskwise/core';
 
 const GB = 1_000_000_000;
 
@@ -182,7 +182,7 @@ export const sampleAudit: AuditResult = {
   permissions: {
     fullDiskAccess: 'limited',
     hostApp: 'iTerm2',
-    hint: 'Grant Full Disk Access to iTerm2 in System Settings → Privacy & Security → Full Disk Access, then re-run macsweep audit.',
+    hint: 'Grant Full Disk Access to iTerm2 in System Settings → Privacy & Security → Full Disk Access, then re-run diskwise audit.',
   },
   findings,
   traps,

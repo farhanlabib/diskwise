@@ -1,7 +1,7 @@
 import Foundation
 
 let helperVersion = "0.1.0"
-let knownCommands = ["trash", "running-apps", "quit-app", "privatesize", "capacity", "icon", "version"]
+let knownCommands = ["trash", "running-apps", "quit-app", "privatesize", "tree", "capacity", "icon", "version"]
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 guard let command = arguments.first else {
@@ -19,6 +19,8 @@ do {
         try cmdQuitApp(rest)
     case "privatesize":
         try cmdPrivateSize(rest)
+    case "tree":
+        try cmdTree(rest)
     case "capacity":
         try cmdCapacity(rest)
     case "icon":

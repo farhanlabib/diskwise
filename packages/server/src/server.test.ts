@@ -11,7 +11,7 @@ import type {
   Finding,
   ItemResult,
   Rule,
-} from '@macsweep/core/types';
+} from '@diskwise/core/types';
 import type { ServerEngine } from './engine';
 import { startServer } from './server';
 import type { ServerHandle, StartServerOptions } from './server';
@@ -331,7 +331,7 @@ async function start(
 }
 
 async function makeAssetsDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'macsweep-assets-'));
+  const dir = await mkdtemp(join(tmpdir(), 'diskwise-assets-'));
   tempDirs.push(dir);
   await writeFile(join(dir, 'index.html'), '<html>INDEX</html>');
   await writeFile(join(dir, 'app.js'), 'console.log(1)');

@@ -10,7 +10,7 @@ import type {
   RunSummary,
   UndoItemResult,
   WalkProgress,
-} from '@macsweep/core/types';
+} from '@diskwise/core/types';
 
 export interface ServerEngine {
   audit(opts: {

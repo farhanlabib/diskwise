@@ -9,7 +9,7 @@ import { undoRun } from './undo';
 const dirs: string[] = [];
 
 async function makeDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'macsweep-undo-'));
+  const dir = await mkdtemp(join(tmpdir(), 'diskwise-undo-'));
   dirs.push(dir);
   return dir;
 }

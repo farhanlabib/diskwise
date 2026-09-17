@@ -1,8 +1,8 @@
 import { homedir } from 'node:os';
 import { Command } from 'commander';
-import { formatBytes } from '@macsweep/report';
-import { checkFullDiskAccess, getDiskInfo, native, runProbe } from '@macsweep/core';
-import type { DiskInfo, PermissionStatus, ProbeRunner } from '@macsweep/core/types';
+import { formatBytes } from '@diskwise/report';
+import { checkFullDiskAccess, getDiskInfo, native, runProbe } from '@diskwise/core';
+import type { DiskInfo, PermissionStatus, ProbeRunner } from '@diskwise/core/types';
 import { detectTools, type ToolInfo } from '../../../core/src/sources/tools';
 import type { IO } from '../program';
 
@@ -88,7 +88,7 @@ export function registerDoctorCommand(program: Command, io: IO, deps: DoctorDeps
 
   program
     .command('doctor')
-    .description('Report host app, Full Disk Access and the tools macsweep can use')
+    .description('Report host app, Full Disk Access and the tools diskwise can use')
     .option('--json', 'print the report as JSON')
     .action(async (options: { json?: boolean }) => {
       const [macosVersion, diskInfo, permissionStatus, helperInfo, toolList] = await Promise.all([

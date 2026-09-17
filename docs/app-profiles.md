@@ -1,11 +1,11 @@
 # App profiles
 
 An **app profile** is reviewed, declarative knowledge about one popular macOS app. It
-tells macsweep which folders for that app are caches it may clean, which folders must
+tells diskwise which folders for that app are caches it may clean, which folders must
 never be touched, and why. Profiles are data — a single exported `AppProfile` object —
 so adding one never means writing cleanup code.
 
-Without a profile, macsweep falls back to a **generic heuristic**: a fixed, whitelisted
+Without a profile, diskwise falls back to a **generic heuristic**: a fixed, whitelisted
 set of cache folder names (`Cache`, `Code Cache`, `GPUCache`, …, `Caches`,
 `Saved Application State`) under `~/Library/Caches/<bundleId>`,
 `~/Library/Application Support/<name|bundleId>`, and a sandboxed app's container. That
@@ -102,7 +102,7 @@ Before writing a profile, confirm which folders are caches by hand — never gue
 
    ```
    pnpm vitest run packages/core/src/apps
-   pnpm -F @macsweep/core typecheck
+   pnpm -F @diskwise/core typecheck
    ```
 
    Both must be green. The lint is the gate: if `lintProfile` rejects your paths, the

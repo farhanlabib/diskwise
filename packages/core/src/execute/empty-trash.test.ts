@@ -11,7 +11,7 @@ let base: string;
 
 beforeAll(async () => {
   const tmp = await fs.realpath(os.tmpdir());
-  base = await fs.mkdtemp(path.join(tmp, 'macsweep-empty-trash-'));
+  base = await fs.mkdtemp(path.join(tmp, 'diskwise-empty-trash-'));
 });
 
 afterAll(async () => {

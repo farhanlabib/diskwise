@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Records the reference-Mac audit baseline used by PLAN.md §12.
 //
-// Redaction lives in TypeScript (@macsweep/core), so instead of scanning with
+// Redaction lives in TypeScript (@diskwise/core), so instead of scanning with
 // `audit --json` and redacting the result here, we ask the CLI for an
 // already-redacted AuditResult: `report --json --redact`.
 

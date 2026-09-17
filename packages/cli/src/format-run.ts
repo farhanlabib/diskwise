@@ -1,5 +1,5 @@
-import type { CleanupPlan, ExecuteResult, RunSummary, Tier, UndoItemResult } from '@macsweep/core';
-import { formatBytes } from '@macsweep/report';
+import type { CleanupPlan, ExecuteResult, RunSummary, Tier, UndoItemResult } from '@diskwise/core';
+import { formatBytes } from '@diskwise/report';
 
 const WIDTH = 80;
 
@@ -54,7 +54,7 @@ export function formatExecution(result: ExecuteResult): string {
   lines.push('');
   if (result.apply) {
     lines.push(
-      `Freed ${formatBytes(result.freed)} · run ${result.runId ?? 'unknown'} · undo Trash moves with \`macsweep undo --last\``,
+      `Freed ${formatBytes(result.freed)} · run ${result.runId ?? 'unknown'} · undo Trash moves with \`diskwise undo --last\``,
     );
   } else {
     lines.push('Dry run: nothing was deleted. Re-run with --apply to clean.');

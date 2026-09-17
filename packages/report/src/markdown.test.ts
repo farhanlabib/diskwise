@@ -1,4 +1,4 @@
-import type { AuditResult } from '@macsweep/core';
+import type { AuditResult } from '@diskwise/core';
 import { describe, expect, it } from 'vitest';
 import { sampleAudit } from './fixtures';
 import { formatMarkdown } from './markdown';

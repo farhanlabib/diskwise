@@ -18,7 +18,7 @@ export function Onboarding({ onNavigate }: { onNavigate: (hash: string) => void 
           Grant Full Disk Access to {hostApp}
         </div>
         <div className="mt-[8px] text-[13.5px] leading-[1.6] text-text2">
-          MacSweep runs inside your terminal, so access is granted to the terminal app that
+          DiskWise runs inside your terminal, so access is granted to the terminal app that
           launched it. Without it, parts of Mail, Messages and Safari are unreadable and get
           reported as "Unreadable".
         </div>
@@ -31,11 +31,11 @@ export function Onboarding({ onNavigate }: { onNavigate: (hash: string) => void 
             3. Quit and re-run the command below
           </div>
           <div className="mt-[14px] flex items-center gap-[10px] rounded-[7px] border border-border bg-win px-[12px] py-[9px]">
-            <span className="flex-1 font-mono text-[12.5px]">macsweep ui</span>
+            <span className="flex-1 font-mono text-[12.5px]">diskwise ui</span>
             <button
               type="button"
               onClick={() => {
-                void copyText('macsweep ui').then((ok) => {
+                void copyText('diskwise ui').then((ok) => {
                   if (ok) {
                     setCopied(true);
                     window.setTimeout(() => setCopied(false), 1400);

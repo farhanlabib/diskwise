@@ -2,7 +2,7 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
-const NO_NETWORK_MESSAGE = 'macsweep makes no outbound network calls (PLAN §5.11)';
+const NO_NETWORK_MESSAGE = 'diskwise makes no outbound network calls (PLAN §5.11)';
 
 const outboundNetworkModules = [
   { name: 'https', message: NO_NETWORK_MESSAGE },
@@ -80,6 +80,20 @@ export default tseslint.config(
     files: ['packages/ui/**'],
     rules: {
       'no-restricted-globals': 'off',
+    },
+  },
+  {
+    // Playwright specs and config run in Node, not in the bundled app.
+    files: ['e2e/**/*.ts', 'playwright.config.ts'],
+    languageOptions: {
+      globals: {
+        Buffer: 'readonly',
+        console: 'readonly',
+        process: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        URL: 'readonly',
+      },
     },
   },
 );

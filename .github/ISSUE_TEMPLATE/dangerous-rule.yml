@@ -12,7 +12,7 @@ body:
     id: rule-id
     attributes:
       label: Rule id
-      description: From `macsweep rules list`, the finding output, or the journal entry.
+      description: From `diskwise rules list`, the finding output, or the journal entry.
       placeholder: xcode.derived-data
     validations:
       required: true
@@ -22,7 +22,7 @@ body:
       label: What was deleted, or offered to be deleted?
       description: Which paths, how many bytes, and whether you ran with `--apply`.
       placeholder: |
-        `macsweep clean --tier 1 --apply` offered to delete ...
+        `diskwise clean --tier 1 --apply` offered to delete ...
     validations:
       required: true
   - type: textarea
@@ -35,7 +35,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: macsweep --version
+      label: diskwise --version
       placeholder: 0.1.0
     validations:
       required: true
@@ -51,7 +51,7 @@ body:
     id: report
     attributes:
       label: Redacted report
-      description: Paste the output of `macsweep report --markdown --redact`. Never paste a raw username or private path.
+      description: Paste the output of `diskwise report --markdown --redact`. Never paste a raw username or private path.
       render: markdown
     validations:
       required: true

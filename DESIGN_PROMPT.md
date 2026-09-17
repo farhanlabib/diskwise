@@ -1,10 +1,10 @@
-# Claude Design prompt — MacSweep local web UI
+# Claude Design prompt — DiskWise local web UI
 
 Paste everything below the line into Claude Design.
 
 ---
 
-Design the web UI for **MacSweep**. It runs locally in the user's browser: the `macsweep ui` command serves it from `127.0.0.1`. It isn't a hosted website, so there's no login, marketing, or account pages. It's an open-source disk cleanup tool that **explains where disk space went** and **only deletes what is provably safe**. It's for developers and power users who've seen macOS "System Data" take 80 GB with no explanation and don't trust "one-click clean" utilities.
+Design the web UI for **DiskWise**. It runs locally in the user's browser: the `diskwise ui` command serves it from `127.0.0.1`. It isn't a hosted website, so there's no login, marketing, or account pages. It's an open-source disk cleanup tool that **explains where disk space went** and **only deletes what is provably safe**. It's for developers and power users who've seen macOS "System Data" take 80 GB with no explanation and don't trust "one-click clean" utilities.
 
 ## Product personality
 - A **measuring instrument, not a cleaner**. It should feel calm, precise and honest, closer to Activity Monitor, Linear or a good profiler than to CleanMyMac.
@@ -14,7 +14,7 @@ Design the web UI for **MacSweep**. It runs locally in the user's browser: the `
 
 ## Platform & visual direction
 - It's a browser page, but it should **feel like a native macOS app**: left sidebar + top toolbar layout, system font stack (`-apple-system` / SF Pro, `ui-monospace` / SF Mono for paths, sizes and commands), a subtle translucent-looking sidebar, 8-pt grid, 6–10 px radii. No web-fonts, no external images or CDNs (everything is served offline).
-- Top bar shows a small "Local · 127.0.0.1" indicator and a "Stop server" action; when the server stops, show a friendly "MacSweep has stopped. Run `macsweep ui` again" page.
+- Top bar shows a small "Local · 127.0.0.1" indicator and a "Stop server" action; when the server stops, show a friendly "DiskWise has stopped. Run `diskwise ui` again" page.
 - Design **light and dark** mode for every screen.
 - Responsive browser viewport: design at 1280×800, and also at a minimum of 960 wide, where the sidebar collapses to icons. Follow the system light/dark preference (`prefers-color-scheme`).
 - Sizes are always right-aligned, tabular numerals, one decimal ("16.2 GB"). When apparent and allocated sizes differ, show both: "2.7 GB used · 228 GB apparent".
@@ -35,8 +35,8 @@ Special badges: **Needs root** (terminal icon; the item becomes a "copy this com
 
 ### 1. Permissions onboarding (first launch)
 - Explains why Full Disk Access is needed. Without it, parts of Mail, Messages and Safari are unreadable and get reported as "Unreadable".
-- Because MacSweep runs inside the terminal, access is granted to **the terminal app** that launched it. Show the detected one with its name ("Grant Full Disk Access to **iTerm2**").
-- Step-by-step: "Open System Settings → Privacy & Security → Full Disk Access → enable iTerm2 → quit and re-run `macsweep ui`". Include a copy button for the command and a status indicator ("Limited / Granted").
+- Because DiskWise runs inside the terminal, access is granted to **the terminal app** that launched it. Show the detected one with its name ("Grant Full Disk Access to **iTerm2**").
+- Step-by-step: "Open System Settings → Privacy & Security → Full Disk Access → enable iTerm2 → quit and re-run `diskwise ui`". Include a copy button for the command and a status indicator ("Limited / Granted").
 - Secondary action: "Continue with limited access".
 - Short privacy promise: "Runs only on this Mac. No outbound network. No telemetry. Nothing is deleted without your confirmation."
 
@@ -113,8 +113,8 @@ Special badges: **Needs root** (terminal icon; the item becomes a "copy this com
 - About section: open source, MIT, version, and "No outbound network. No telemetry." stated as a fact.
 
 ### 11. Session pages (small, centered, minimal)
-- **Server stopped**: "MacSweep has stopped." plus a copyable `macsweep ui` command to start it again.
-- **Invalid or expired link** (missing token): "Open MacSweep from your terminal: run `macsweep ui`." Don't include any technical token details.
+- **Server stopped**: "DiskWise has stopped." plus a copyable `diskwise ui` command to start it again.
+- **Invalid or expired link** (missing token): "Open DiskWise from your terminal: run `diskwise ui`." Don't include any technical token details.
 - **Reconnecting**: shown briefly if the progress stream drops during a scan.
 
 ## Components to include in the design system sheet

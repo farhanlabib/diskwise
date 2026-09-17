@@ -1,9 +1,9 @@
-# macsweep — Project Plan (v2)
+# diskwise — Project Plan (v2)
 
 An open-source macOS disk cleanup tool that **explains where your space went** and **only deletes what is provably safe**.
 
 > v2 (2026-09-17): includes every adjustment from `AUDIT.md` and adds the **Apps** feature (per-app cache cleaning, §4.6).
-> v2.1 (2026-09-17): **no Apple Developer account.** Nothing needs signing or notarizing. The GUI is a local web UI launched by `macsweep ui` (§7), not an Electron app.
+> v2.1 (2026-09-17): **no Apple Developer account.** Nothing needs signing or notarizing. The GUI is a local web UI launched by `diskwise ui` (§7), not an Electron app.
 
 ---
 
@@ -22,9 +22,9 @@ macOS reports a vague "System Data" bucket that swallows tens of GB with no expl
 
 > The exact CoreSimulator number differed between two measurements in the original session (19 GB vs 39 GB, because mounted runtime volumes were counted twice). This is why §4.1 forbids crossing device boundaries. Verification (§12) uses a recorded baseline, not hardcoded numbers.
 
-Generic cleaners (`mole`, `merve`, `nbytes`, CleanMyMac) either show *where* space is without explaining *what it is*, or they delete aggressively with weak rationale. **macsweep's product is the reasoning, not the deletion.**
+Generic cleaners (`mole`, `merve`, `nbytes`, CleanMyMac) either show *where* space is without explaining *what it is*, or they delete aggressively with weak rationale. **diskwise's product is the reasoning, not the deletion.**
 
-Four things no competitor does well, which are the whole point of macsweep:
+Four things no competitor does well, which are the whole point of diskwise:
 
 1. **Decompose "System Data"** into named, sized, explained buckets, including an honest **Unmeasured** bucket for what can't be read.
 2. **Never lie about sizes.** Report *allocated* bytes (and *reclaimable* bytes once clones are understood), never apparent bytes. Hardlinks and APFS clones are never double-counted.
@@ -47,13 +47,13 @@ Four things no competitor does well, which are the whole point of macsweep:
 
 | Decision | Choice |
 |---|---|
-| Name | `macsweep` (CLI) / MacSweep (UI title). Check npm, Homebrew, GitHub, and "Mac" trademark risk in Phase 0 |
+| Name | `diskwise` (CLI) / DiskWise (UI title). Check npm, Homebrew, GitHub, and "Mac" trademark risk in Phase 0 |
 | Language | TypeScript everywhere, plus one small Swift native helper (§4.7) |
 | Structure | pnpm monorepo: one shared core, two frontends |
-| Frontends | `macsweep` CLI + a local web UI (`macsweep ui`), both in the same npm package |
+| Frontends | `diskwise` CLI + a local web UI (`diskwise ui`), both in the same npm package |
 | GUI technology | React + Vite + Tailwind, served by the CLI on `127.0.0.1` only. No Electron, no `.app` bundle |
 | Signing | None required. The Swift helper is ad-hoc signed (`codesign -s -`, free, and required for arm64) |
-| Distribution | npm (`npx macsweep`), a Homebrew formula in our own tap (built from source), and later a `homebrew-core` submission |
+| Distribution | npm (`npx diskwise`), a Homebrew formula in our own tap (built from source), and later a `homebrew-core` submission |
 | Scope | Dev-first, with general and per-app tiers behind the same safety engine |
 | Minimum OS | macOS 14 Sonoma+, Apple Silicon and Intel |
 | Node engine | `>=20`, ESM only, built with `tsup` |
@@ -64,7 +64,7 @@ Four things no competitor does well, which are the whole point of macsweep:
 ## 3. Repository layout
 
 ```
-~/Documents/macsweep/
+~/Documents/diskwise/
 ├── PLAN.md  AUDIT.md  DESIGN_PROMPT.md  TASKS.md
 ├── README.md  LICENSE  CONTRIBUTING.md  SECURITY.md
 ├── pnpm-workspace.yaml  package.json  tsconfig.base.json
@@ -75,7 +75,7 @@ Four things no competitor does well, which are the whole point of macsweep:
 │       ├── new-cleanup-target.yml
 │       └── new-app-profile.yml
 ├── packages/
-│   ├── core/                      # @macsweep/core: the entire engine
+│   ├── core/                      # @diskwise/core: the entire engine
 │   │   └── src/
 │   │       ├── fs/                # allocated-size, walker, path-safety
 │   │       ├── sources/           # disk, permissions, snapshots, system-data, apps
@@ -86,10 +86,10 @@ Four things no competitor does well, which are the whole point of macsweep:
 │   │       ├── journal.ts
 │   │       └── redact.ts
 │   ├── native-helper/             # Swift CLI, universal binary (trash, privatesize, capacity, quit-app, icons)
-│   ├── report/                    # @macsweep/report: table / json / markdown
-│   ├── server/                    # @macsweep/server: loopback-only HTTP + SSE API over core (§7)
-│   ├── ui/                        # @macsweep/ui: React + Vite + Tailwind, built to static assets
-│   └── cli/                       # macsweep: the published binary (bundles server, ui assets, helper)
+│   ├── report/                    # @diskwise/report: table / json / markdown
+│   ├── server/                    # @diskwise/server: loopback-only HTTP + SSE API over core (§7)
+│   ├── ui/                        # @diskwise/ui: React + Vite + Tailwind, built to static assets
+│   └── cli/                       # diskwise: the published binary (bundles server, ui assets, helper)
 ├── fixtures/
 │   ├── trees/                     # synthetic filesystem builders
 │   ├── probes/                    # recorded simctl/docker/brew/diskutil/tmutil output
@@ -101,7 +101,7 @@ Four things no competitor does well, which are the whole point of macsweep:
     └── app-profiles.md            # how to add an app profile
 ```
 
-If the `@macsweep` npm scope is unavailable, fall back to unscoped `macsweep-core` / `macsweep-report`.
+If the `@diskwise` npm scope is unavailable, fall back to unscoped `diskwise-core` / `diskwise-report`.
 
 ---
 
@@ -125,7 +125,7 @@ The whole product is a measuring instrument, so the measurements have to be righ
   - Perf budget: a full `~` scan of ~1M entries in under 60 s on an M-series Mac.
 - `sources/`
   - `disk.ts`: container and volume totals from `diskutil info -plist /` and `diskutil apfs list -plist`. Purgeable and "available for important usage" come from the native helper (v0.3).
-  - `permissions.ts`: detects Full Disk Access by probing a protected path. It reports `granted | limited`, and in limited mode names the host app to grant (Terminal, iTerm, VS Code, or MacSweep).
+  - `permissions.ts`: detects Full Disk Access by probing a protected path. It reports `granted | limited`, and in limited mode names the host app to grant (Terminal, iTerm, VS Code, or DiskWise).
   - `snapshots.ts`: `tmutil listlocalsnapshots /` for count and dates. Snapshot sizes can't be measured without root, so the report says exactly that and offers a copy-paste thin command.
   - `system-data.ts`: the decomposer (§4.8).
   - `apps.ts`: installed app inventory (§4.6).
@@ -241,7 +241,7 @@ sources + rules + app profiles → scan → Finding[] → plan (CleanupPlan) →
 - `scan/`: runs matchers with bounded concurrency, resolves path ownership, and produces `Finding[]`.
 - `plan/`: turns findings into a selectable, serializable `CleanupPlan` (`plan.json`) with per-tier, per-category, per-app, and grand totals.
 - `execute/`: orders actions, runs preflight and identity checks, and executes.
-- `journal.ts`: write-ahead JSONL at `~/.macsweep/journal/<timestamp>.jsonl`. It writes an **intent** record before each action and a **result** record after it. A lockfile at `~/.macsweep/lock` prevents concurrent runs (CLI and GUI). This enables `undo` and makes every run auditable.
+- `journal.ts`: write-ahead JSONL at `~/.diskwise/journal/<timestamp>.jsonl`. It writes an **intent** record before each action and a **result** record after it. A lockfile at `~/.diskwise/lock` prevents concurrent runs (CLI and GUI). This enables `undo` and makes every run auditable.
 - `redact.ts`: rewrites `/Users/<name>` to `~`. It also redacts hostnames, volume names, and email-like segments, and can optionally hash every path segment under `~` (project names are often client names).
 
 ### 4.6 Apps: per-app cache cleaning (new)
@@ -307,7 +307,7 @@ The CLI works without the helper (it degrades to allocated sizes, `~/.Trash` mov
 
 ### 4.8 System Data decomposition
 
-"System Data" isn't exposed by any Apple API. macsweep defines it (in `docs/system-data.md`) as **container used − (Applications + Documents/user files + other categorized)**, and breaks it into:
+"System Data" isn't exposed by any Apple API. diskwise defines it (in `docs/system-data.md`) as **container used − (Applications + Documents/user files + other categorized)**, and breaks it into:
 
 `/Library` (with Developer/CoreSimulator split into runtimes, images, devices, and caches) · `/private/var` (vm, folders, db, log) · `/opt/homebrew` or `/usr/local` · hidden `~/Library` (Caches, Containers, Application Support, Group Containers, Developer) · local snapshots (count only) · **Unmeasured** = total − everything measured (protected, needs root, snapshots). The buckets **plus Unmeasured always equal the total**.
 
@@ -336,16 +336,16 @@ Leftovers from uninstalled **apps** (as opposed to the OS) are `app.orphaned-dat
 
 These are enforced in code and tested adversarially. `docs/safety-model.md` maps each rule to its tests.
 
-1. **Dry-run is the default.** `macsweep clean` prints a plan and exits. Nothing is deleted without `--apply`.
+1. **Dry-run is the default.** `diskwise clean` prints a plan and exits. Nothing is deleted without `--apply`.
 2. **Allowlist, not denylist.** Every rule declares `roots`, and the executor rejects any target whose `realpath` escapes them. This defeats symlink and `../` traversal.
 3. **Path comparison is canonical.** `realpath`, then Unicode NFD normalization, then case-folding when the volume is case-insensitive. This applies to allowlist and denylist checks alike.
 4. **Prove identity, not just location.** Right before acting: `lstat` the target, require the same `dev`/`ino`/file type captured at scan time, and require no symlink in the resolved chain. Abort on any mismatch.
 5. **Permanent denylist**, checked last so it can never be overridden: `/`, `/System`, `/System/Volumes/*`, `/private/var/vm`, `/private/var/db`, `~/Library/Keychains`, `~/Library/Messages`, `~/Library/Mail`, `~/Library/Preferences`, `~/Library/Mobile Documents`, `~/Library/CloudStorage`, `/Applications/*.app` bundles, and Time Machine destinations.
 6. **Tier 2 always goes to Trash.** Permanent removal requires `--permanent` plus typed confirmation of the rule id. `permanentOnly` items always need typed confirmation. In non-TTY mode, Tier 2 is refused outright.
-7. **Root work is never automated.** `needsRoot` rules emit the exact command for the user to run themselves. macsweep never shells out to `sudo` and never shows a password prompt.
+7. **Root work is never automated.** `needsRoot` rules emit the exact command for the user to run themselves. diskwise never shells out to `sudo` and never shows a password prompt.
 8. **Preflight state checks come from rule data.** They refuse to touch an app's caches while it runs, Docker data while the daemon runs, or a runtime while a simulator is booted. The tool quits gracefully when asked, or skips; it never corrupts data.
 9. **Write-ahead journal + single-run lock.** Every action has an intent record before it runs and a result record after.
-10. **Undo.** `macsweep undo --last` restores Trash moves from the recorded trashed URLs and states exactly what can't be restored and why ("Trash was emptied", "rebuilds automatically").
+10. **Undo.** `diskwise undo --last` restores Trash moves from the recorded trashed URLs and states exactly what can't be restored and why ("Trash was emptied", "rebuilds automatically").
 11. **No outbound network, no telemetry.** Lint bans outbound network modules (`https`, `net.connect`, `undici`, `fetch`) everywhere. The only exception is `packages/server`, which may call `http.createServer`, and only for loopback listening. A test runs the CLI and UI server with outbound connections blocked. The UI ships a strict CSP (`default-src 'self'; connect-src 'self'`).
 12. **The local UI server is not an attack surface** (§7.1): it binds to `127.0.0.1` only, uses a per-session secret token, validates `Host` and `Origin`, sends no CORS headers, and every mutating call needs the token plus a JSON body. It shuts down with the CLI process.
 
@@ -354,31 +354,31 @@ These are enforced in code and tested adversarially. `docs/safety-model.md` maps
 ## 6. CLI surface (`packages/cli`)
 
 ```
-macsweep audit                         # full report, decomposed, with tiers
-macsweep audit --json                  # machine-readable, versioned schema
-macsweep audit --explain               # teaching mode: what "System Data" really is
-macsweep audit --category dev|system|browser|app|user-data|os-leftovers
-macsweep doctor                        # xcode/docker/brew/node/... versions, Full Disk Access status
-macsweep apps                          # installed apps sorted by reclaimable cache
-macsweep apps show <name|bundleId>     # one app: caches, logs, data, sign-in data, running state
-macsweep apps --orphans                # data left behind by uninstalled apps
-macsweep plan --tier 0,1 [-o plan.json]
-macsweep clean --tier 0 --apply
-macsweep apps clean slack --apply      # clean one app's caches, logs and saved state (never app data)
-macsweep clean --plan plan.json --apply
-macsweep clean --interactive           # per-item prompts
-macsweep undo --last
-macsweep history
-macsweep rules list | rules show <id>
-macsweep report --markdown --redact > disk-report.md
-macsweep ui [--port 0] [--no-open]    # start the local web UI on 127.0.0.1 and open the browser
+diskwise audit                         # full report, decomposed, with tiers
+diskwise audit --json                  # machine-readable, versioned schema
+diskwise audit --explain               # teaching mode: what "System Data" really is
+diskwise audit --category dev|system|browser|app|user-data|os-leftovers
+diskwise doctor                        # xcode/docker/brew/node/... versions, Full Disk Access status
+diskwise apps                          # installed apps sorted by reclaimable cache
+diskwise apps show <name|bundleId>     # one app: caches, logs, data, sign-in data, running state
+diskwise apps --orphans                # data left behind by uninstalled apps
+diskwise plan --tier 0,1 [-o plan.json]
+diskwise clean --tier 0 --apply
+diskwise apps clean slack --apply      # clean one app's caches, logs and saved state (never app data)
+diskwise clean --plan plan.json --apply
+diskwise clean --interactive           # per-item prompts
+diskwise undo --last
+diskwise history
+diskwise rules list | rules show <id>
+diskwise report --markdown --redact > disk-report.md
+diskwise ui [--port 0] [--no-open]    # start the local web UI on 127.0.0.1 and open the browser
 ```
 
 Output style: a table grouping findings by tier with `— because <rationale> · restore cost: <regeneration>` for each. `--explain` and `rules show` are generated from the same rule data that drives deletion, so the explanation can never drift from the behavior.
 
 ---
 
-## 7. Local web UI (`macsweep ui`)
+## 7. Local web UI (`diskwise ui`)
 
 **Why not Electron:** without an Apple Developer account, a downloaded `.app` can't be notarized. On macOS 15+ users would have to click through System Settings → Privacy & Security → "Open Anyway". Worse, an ad-hoc signed app's Full Disk Access grant is tied to its code hash, so it is **lost on every update**. A local web UI avoids all of that:
 - nothing to sign
@@ -386,7 +386,7 @@ Output style: a table grouping findings by tier with `— because <rationale> ·
 - it ships in the same npm or Homebrew install
 - one engine process serves both CLI and GUI
 
-- `macsweep ui` starts `@macsweep/server` inside the CLI process, binds `127.0.0.1` on a random free port, prints the URL, and opens it with `open` (skip with `--no-open`). **Ctrl-C** or closing all tabs (after an idle timeout of 10 min with no connected client) stops it.
+- `diskwise ui` starts `@diskwise/server` inside the CLI process, binds `127.0.0.1` on a random free port, prints the URL, and opens it with `open` (skip with `--no-open`). **Ctrl-C** or closing all tabs (after an idle timeout of 10 min with no connected client) stops it.
 - **UI:** React + Vite + Tailwind in `packages/ui`, built to static assets embedded in the CLI package and served from memory. No CDN, no web fonts from the internet (system font stack: `-apple-system`, `SF Mono` via `ui-monospace`).
 - **API:** JSON over `node:http` with a small hand-written router. Request and response bodies are validated with zod schemas shared with the UI. **Server-Sent Events** stream scan progress, execution progress, and job status. No framework, to keep the dependency surface of a tool that deletes files small.
 - **Jobs:** scans and executions run as cancellable jobs in the same process (the walker is async and doesn't block the event loop). Only one execute job runs at a time (the journal lock also covers the CLI in another terminal).
@@ -407,7 +407,7 @@ Output style: a table grouping findings by tier with `— because <rationale> ·
 
 Screens (design brief in `DESIGN_PROMPT.md`):
 
-1. **Permissions onboarding**: why Full Disk Access is needed, **which terminal app to grant it to** (detected: Terminal, iTerm2, Ghostty, Warp, VS Code), a note to restart `macsweep ui` afterwards, a live status indicator, and "continue with limited access".
+1. **Permissions onboarding**: why Full Disk Access is needed, **which terminal app to grant it to** (detected: Terminal, iTerm2, Ghostty, Warp, VS Code), a note to restart `diskwise ui` afterwards, a live status indicator, and "continue with limited access".
 2. **Scanning**: live progress and cancel.
 3. **Overview**: segmented bar (Apps · Developer · Caches · Your data · System (protected) · Unmeasured · Purgeable · Free), the headline "reclaimable: X GB", the largest wins, and trap cards (sparse files).
 4. **System Data explainer**: the decomposition macOS hides, including Unmeasured.
@@ -449,13 +449,13 @@ Plus a non-rule **trap detector** that flags files whose apparent size far excee
 
 **v0.2: executor + trust.** Path safety (canonical compare, identity check), preflight, executors, write-ahead journal and lock, native helper `trash`, `trash-path` + `undo` (exercised by a synthetic test rule), Tier 0/1 package-manager and Xcode rules, dyld as copy-paste. `clean --apply` ships.
 
-**v0.3: the differentiators.** Native helper (`privatesize`, `capacity`, `running-apps`, `quit-app`, walker benchmark), Docker rules (split), simulator runtimes and devices, System Data decomposition with Unmeasured, snapshots, `audit --explain`, `doctor`, redacted markdown reports, **app inventory + generic app caches + first 10 app profiles, `macsweep apps` and `apps clean`.**
+**v0.3: the differentiators.** Native helper (`privatesize`, `capacity`, `running-apps`, `quit-app`, walker benchmark), Docker rules (split), simulator runtimes and devices, System Data decomposition with Unmeasured, snapshots, `audit --explain`, `doctor`, redacted markdown reports, **app inventory + generic app caches + first 10 app profiles, `diskwise apps` and `apps clean`.**
 
-**v0.4: local web UI v1 (`macsweep ui`).** Loopback server with the §7.1 security suite, onboarding, scanning, overview, explainer, **Apps**, cleanup, review, running and result. Audit plus Tier 0/1 only.
+**v0.4: local web UI v1 (`diskwise ui`).** Loopback server with the §7.1 security suite, onboarding, scanning, overview, explainer, **Apps**, cleanup, review, running and result. Audit plus Tier 0/1 only.
 
 **v0.5: Tier 2.** Typed confirmation, browser profiles, WhatsApp media, Downloads triage, iOS backups, `trash.empty`, **orphaned app data**, remaining app profiles, History and Settings screens, full undo story.
 
-**v1.0: distribution.** npm release with the prebuilt ad-hoc-signed universal helper, a Homebrew formula in our own tap (`brew install <owner>/tap/macsweep`, which builds the helper from source), a reproducible-build note (anyone can compare their build), published `docs/system-data.md`, rule and app-profile authoring guides, and first external contributions. After v1.0, submit to `homebrew-core` once the project meets its notability requirements. **No cask, no `.app`, no notarization.**
+**v1.0: distribution.** npm release with the prebuilt ad-hoc-signed universal helper, a Homebrew formula in our own tap (`brew install <owner>/tap/diskwise`, which builds the helper from source), a reproducible-build note (anyone can compare their build), published `docs/system-data.md`, rule and app-profile authoring guides, and first external contributions. After v1.0, submit to `homebrew-core` once the project meets its notability requirements. **No cask, no `.app`, no notarization.**
 
 ---
 
@@ -471,7 +471,7 @@ Plus a non-rule **trap detector** that flags files whose apparent size far excee
 - **Journal crash test:** kill mid-run and assert the intent record exists without a result, and that the lock recovers.
 - **No-network test:** the CLI and UI e2e run with outbound connections blocked, and the lint rule bans outbound network modules.
 - **UI server security suite:** binds loopback only; missing or wrong token → 401; foreign `Host` (rebinding) → 403; foreign `Origin` → 403; `text/plain` or form POST → 415; no CORS headers present; no endpoint accepts a raw path to delete; typed confirmation is enforced server-side. Any failure blocks release.
-- **UI e2e:** Playwright against `macsweep ui --no-open` on a fixture home (scan → Apps → clean caches → undo).
+- **UI e2e:** Playwright against `diskwise ui --no-open` on a fixture home (scan → Apps → clean caches → undo).
 - **Snapshot tests** for report formatters and redaction.
 - **CI matrix:** `ubuntu-latest` for lint, typecheck, schema, planner, and formatters. `macos-15` for measurement, native helper, integration, and e2e.
 - **Safety lint:** fails if `remove-path` or `remove-dir-contents` is used outside Tier 0/1, a root isn't on the approved list, a Tier 3 rule has an action, or an app profile marks a non-cache location as Tier 0/1 without maintainer override.
@@ -495,17 +495,17 @@ How to confirm the implementation is correct at each milestone:
 1. `pnpm -r build && pnpm -r typecheck && pnpm test`: all green on both CI runners.
 2. `node packages/cli/dist/index.js audit --json` on the reference Mac matches `fixtures/baseline/` within ±10%, or the difference is explained by a journal entry. Specifically: simulator runtimes are listed individually without double-counting mounted volumes, 55-ish `node_modules` dirs are found, and `Docker.raw` is reported as ~2.7 GB allocated with its 228 GB apparent size called out as a trap.
 3. `audit --explain`: the named System Data sub-buckets **plus Unmeasured** equal the container's used total.
-4. `macsweep apps` lists every app in `/Applications`, with cache sizes that match a manual `du` of the resolved cache folders. `apps show slack` separates caches from sign-in data and app data.
+4. `diskwise apps` lists every app in `/Applications`, with cache sizes that match a manual `du` of the resolved cache folders. `apps show slack` separates caches from sign-in data and app data.
 5. **Dry-run purity:** `clean --tier 0` and `apps clean slack` (no `--apply`) leave `diskutil` numbers and fixture hashes unchanged.
 6. **Safety suite:** every adversarial test fails closed, and the safety lint rejects a deliberately dangerous test rule and a dangerous test app profile.
-7. **End-to-end on the reference Mac:** `clean --tier 0 --apply` frees a measurably positive number of bytes. `apps clean <running app>` refuses until the app quits. `undo --last` restores anything moved to Trash. `macsweep ui` shows the same numbers as `audit --json` and `apps --json`.
-8. **Clean-machine install without an Apple account:** on a fresh macOS user, `npx macsweep audit` and `brew install <owner>/tap/macsweep && macsweep ui` both work with no Gatekeeper prompt, and the helper reports `codesign -dv` as ad-hoc.
+7. **End-to-end on the reference Mac:** `clean --tier 0 --apply` frees a measurably positive number of bytes. `apps clean <running app>` refuses until the app quits. `undo --last` restores anything moved to Trash. `diskwise ui` shows the same numbers as `audit --json` and `apps --json`.
+8. **Clean-machine install without an Apple account:** on a fresh macOS user, `npx diskwise audit` and `brew install <owner>/tap/diskwise && diskwise ui` both work with no Gatekeeper prompt, and the helper reports `codesign -dv` as ad-hoc.
 
 ---
 
 ## 13. Open questions to settle during Phase 0
 
-- Is the `@macsweep` npm scope available? (fallback: unscoped package names)
+- Is the `@diskwise` npm scope available? (fallback: unscoped package names)
 - GitHub org or repo home, and whether `gh` should create it.
 - Trademark risk of "Mac" in a distributed app name. Have a fallback name ready.
 - ~~Apple Developer ID account~~ **Resolved: not needed.** The GUI is a local web UI and the helper is ad-hoc signed (§4.7, §7).

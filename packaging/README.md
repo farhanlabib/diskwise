@@ -2,7 +2,7 @@
 
 Release artifacts that do **not** require an Apple Developer account: no Developer ID, no notarization, no `.app`.
 
-- `homebrew/macsweep.rb` — the Homebrew formula, built from source.
+- `homebrew/diskwise.rb` — the Homebrew formula, built from source.
 
 ## Homebrew tap
 
@@ -12,14 +12,14 @@ The formula lives in this repo for reference. To ship it, create a tap repositor
 gh repo create farhanlabib/homebrew-tap --public
 ```
 
-Then copy the formula into it at `Formula/macsweep.rb`:
+Then copy the formula into it at `Formula/diskwise.rb`:
 
 ```sh
 mkdir -p /tmp/homebrew-tap/Formula
-cp packaging/homebrew/macsweep.rb /tmp/homebrew-tap/Formula/macsweep.rb
+cp packaging/homebrew/diskwise.rb /tmp/homebrew-tap/Formula/diskwise.rb
 cd /tmp/homebrew-tap
-git init && git add Formula/macsweep.rb
-git commit -m "macsweep 0.1.0"
+git init && git add Formula/diskwise.rb
+git commit -m "diskwise 0.1.0"
 git remote add origin git@github.com:farhanlabib/homebrew-tap.git
 git push -u origin main
 ```
@@ -27,33 +27,33 @@ git push -u origin main
 Users then install with:
 
 ```sh
-brew install farhanlabib/tap/macsweep
+brew install farhanlabib/tap/diskwise
 ```
 
 ## Updating for a release
 
-Each release needs two edits to `Formula/macsweep.rb` in the tap:
+Each release needs two edits to `Formula/diskwise.rb` in the tap:
 
 1. **`url`** — point at the new tag tarball:
 
    ```ruby
-   url "https://github.com/farhanlabib/macsweep/archive/refs/tags/v0.1.0.tar.gz"
+   url "https://github.com/farhanlabib/diskwise/archive/refs/tags/v0.1.0.tar.gz"
    ```
 
 2. **`sha256`** — replace the 64-zero placeholder with the checksum of that exact tarball:
 
    ```sh
-   curl -L https://github.com/farhanlabib/macsweep/archive/refs/tags/v0.1.0.tar.gz -o macsweep.tar.gz
-   shasum -a 256 macsweep.tar.gz
+   curl -L https://github.com/farhanlabib/diskwise/archive/refs/tags/v0.1.0.tar.gz -o diskwise.tar.gz
+   shasum -a 256 diskwise.tar.gz
    ```
 
-   Paste the resulting hash into the formula. `brew audit --strict --formula Formula/macsweep.rb` catches a stale or malformed checksum before users see it.
+   Paste the resulting hash into the formula. `brew audit --strict --formula Formula/diskwise.rb` catches a stale or malformed checksum before users see it.
 
 Verify locally before pushing:
 
 ```sh
-brew install --build-from-source Formula/macsweep.rb
-brew test macsweep
+brew install --build-from-source Formula/diskwise.rb
+brew test diskwise
 ```
 
 ## Why the build is from source

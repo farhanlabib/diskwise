@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-macsweep is in early development. Security fixes land on `main` and ship in the next release; only the latest published version is supported.
+diskwise is in early development. Security fixes land on `main` and ship in the next release; only the latest published version is supported.
 
 | Version                  | Supported |
 | ------------------------ | --------- |
@@ -12,24 +12,24 @@ macsweep is in early development. Security fixes land on `main` and ship in the 
 
 ## Reporting a vulnerability
 
-Please report security issues **privately** through GitHub's [private vulnerability reporting](https://github.com/<owner>/macsweep/security/advisories/new). Do not open a public issue for a security bug.
+Please report security issues **privately** through GitHub's [private vulnerability reporting](https://github.com/<owner>/diskwise/security/advisories/new). Do not open a public issue for a security bug.
 
-Include what you did, what happened, and what you expected, plus `macsweep --version` and your macOS version. A redacted report (`macsweep report --markdown --redact`) helps and never includes your username or private paths. We will acknowledge your report, keep you updated while we investigate, and credit you in the fix unless you prefer otherwise.
+Include what you did, what happened, and what you expected, plus `diskwise --version` and your macOS version. A redacted report (`diskwise report --markdown --redact`) helps and never includes your username or private paths. We will acknowledge your report, keep you updated while we investigate, and credit you in the fix unless you prefer otherwise.
 
 ## What counts as a security bug
 
-macsweep deletes files, so anything that makes a deletion unsafe or unexpected is a security bug:
+diskwise deletes files, so anything that makes a deletion unsafe or unexpected is a security bug:
 
 - **A rule or app profile that deletes user data**, or that offers to delete data that is not provably regenerable.
 - **A rule that escapes its declared roots** — symlink traversal, `../`, a path swapped between scan and execute, Unicode or case variants, or a target outside the rule's allowlist.
 - **Bypassing dry-run**, or any action that executes without `--apply`.
-- **Any outbound network call**, in the CLI, the library, or the UI. macsweep is offline by design.
+- **Any outbound network call**, in the CLI, the library, or the UI. diskwise is offline by design.
 - **Any UI server exposure beyond loopback** — binding anything other than `127.0.0.1`, missing or unenforced token checks, a missing `Host` or `Origin` check, or CORS headers.
 - **Skipping a safety check**: a missing denylist check, an identity (`dev`/`ino`) mismatch that is not refused, a preflight that does not block, or a journal that can lose an action.
 
 ## Safety model
 
-macsweep's safety guarantees are the product, and they are enforced in code and tested adversarially:
+diskwise's safety guarantees are the product, and they are enforced in code and tested adversarially:
 
 1. Dry-run is the default; nothing runs without `--apply`.
 2. Allowlists, not denylists: every rule declares `roots` and targets must resolve inside them.

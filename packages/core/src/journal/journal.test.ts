@@ -8,7 +8,7 @@ import { lastAppliedRunId, listRuns, openJournal, readRun } from './journal';
 const dirs: string[] = [];
 
 async function makeDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'macsweep-journal-'));
+  const dir = await mkdtemp(join(tmpdir(), 'diskwise-journal-'));
   dirs.push(dir);
   return dir;
 }

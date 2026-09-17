@@ -7,7 +7,7 @@ import { acquireLock } from './lock';
 const dirs: string[] = [];
 
 async function makeDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'macsweep-lock-'));
+  const dir = await mkdtemp(join(tmpdir(), 'diskwise-lock-'));
   dirs.push(dir);
   return dir;
 }

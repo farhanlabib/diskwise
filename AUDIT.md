@@ -1,4 +1,4 @@
-# macsweep — Plan Audit
+# diskwise — Plan Audit
 
 > **Status: resolved.** All findings were folded into PLAN.md v2 on 2026-09-17.
 
@@ -46,7 +46,7 @@ Re-measuring a 20 GB tree before deleting it is slow, and it still doesn't prove
 
 ### A7. Journal must be write-ahead, with a single-run lock
 If a run crashes after the delete but before the journal write, the history is silently lost.
-**Adjust:** write an `intent` record, run the action, then write a `result` record. Take a lockfile at `~/.macsweep/lock` so two runs (for example CLI and GUI) can't execute at the same time.
+**Adjust:** write an `intent` record, run the action, then write a `result` record. Take a lockfile at `~/.diskwise/lock` so two runs (for example CLI and GUI) can't execute at the same time.
 
 ---
 
@@ -136,9 +136,9 @@ Chrome downloads it again automatically.
 - `cache.codex-runtimes` is specific to one machine. Generalize it to `ai.local-model-caches` (Ollama, LM Studio, HF hub `~/.cache/huggingface`) at **Tier 1 with a size warning**, because these are often deliberately kept models. `ide.reinstallable-extensions` needs a concrete definition (for example, VS Code `~/.vscode/extensions/.obsolete`-listed dirs and old version folders only).
 - `yarn cache clean` behaves differently in Yarn Berry (per-project `.yarn/cache`, which is often committed on purpose). Limit the rule to Yarn classic's global cache.
 - `browser.code-cache` needs a preflight process check (browser not running), like the other browser rules.
-- Branding: "Mac" in a product name can draw Apple trademark complaints for a signed, distributed `.app`. Check before v1.0. Also check `macsweep` on npm, Homebrew and GitHub during Phase 0.
+- Branding: "Mac" in a product name can draw Apple trademark complaints for a signed, distributed `.app`. Check before v1.0. Also check `diskwise` on npm, Homebrew and GitHub during Phase 0.
 - Add `--yes` / non-TTY behavior: `clean --apply` in a non-TTY never prompts and **refuses** Tier 2.
-- Add `macsweep rules list|show <id>` so users can read a rule's rationale without running a scan.
+- Add `diskwise rules list|show <id>` so users can read a rule's rationale without running a scan.
 
 ---
 

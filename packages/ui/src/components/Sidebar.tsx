@@ -26,7 +26,7 @@ export function Sidebar({
     >
       {collapsed ? null : (
         <div className="px-[8px] pt-[6px] pb-[4px] text-[11px] [font-weight:600] uppercase tracking-[0.05em] text-text3">
-          MacSweep
+          DiskWise
         </div>
       )}
       {items.map((item) => {
@@ -60,7 +60,7 @@ export function Sidebar({
       >
         <span
           className="h-[8px] w-[8px] flex-none rounded-full"
-          style={{ background: 'var(--t2-dot)' }}
+          style={{ background: fdaLabel === 'Granted' ? 'var(--t0-dot)' : 'var(--t2-dot)' }}
         />
         {collapsed ? null : <span>Full Disk Access: {fdaLabel}</span>}
       </div>

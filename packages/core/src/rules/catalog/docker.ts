@@ -78,7 +78,7 @@ export const dockerRules: Rule[] = [
     action: null,
     manualCommand: 'docker volume ls',
     rationale:
-      'Volumes hold databases and other container data; macsweep never deletes them.',
+      'Volumes hold databases and other container data; diskwise never deletes them.',
     regeneration:
       'Nothing restores a removed volume unless the application that used it can rebuild its data from elsewhere.',
   },

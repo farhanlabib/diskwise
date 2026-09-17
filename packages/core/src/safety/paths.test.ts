@@ -32,7 +32,7 @@ async function expectCode(
 
 beforeAll(async () => {
   const tmp = await fs.realpath(os.tmpdir());
-  base = await fs.mkdtemp(path.join(tmp, 'macsweep-safety-'));
+  base = await fs.mkdtemp(path.join(tmp, 'diskwise-safety-'));
   home = path.join(base, 'home');
   root = path.join(base, 'root');
   await fs.mkdir(path.join(home, 'Library', 'Keychains'), { recursive: true });

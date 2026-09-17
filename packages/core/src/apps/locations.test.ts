@@ -32,7 +32,7 @@ const MB = 1024 * KB;
 const roots: string[] = [];
 
 async function makeHome(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'macsweep-apps-locations-'));
+  const dir = await mkdtemp(join(tmpdir(), 'diskwise-apps-locations-'));
   roots.push(dir);
   return dir;
 }

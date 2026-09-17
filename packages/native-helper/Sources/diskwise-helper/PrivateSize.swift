@@ -45,3 +45,10 @@ func privateSizeBytes(forPath path: String) -> Int64? {
     guard value >= 0 else { return nil }
     return value
 }
+
+// The clone-aware, non-shared allocated size of one path, or nil when the
+// volume/filesystem does not support `ATTR_CMNEXT_PRIVATESIZE`.
+func privateSize(ofPath path: String) -> UInt64? {
+    guard let bytes = privateSizeBytes(forPath: path) else { return nil }
+    return UInt64(bytes)
+}

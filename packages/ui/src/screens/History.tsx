@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import type { UndoItemResult } from '@macsweep/core/types';
+import type { UndoItemResult } from '@diskwise/core/types';
 import { history as mockHistory } from '../mock/data';
 import type { HistoryRun } from '../mock/types';
 import { formatBytes } from '../lib/format';

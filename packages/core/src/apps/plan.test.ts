@@ -11,7 +11,7 @@ describe('buildAppPlan', () => {
   let report: AppReport;
 
   beforeAll(async () => {
-    home = await realpath(await mkdtemp(join(tmpdir(), 'macsweep-appplan-')));
+    home = await realpath(await mkdtemp(join(tmpdir(), 'diskwise-appplan-')));
     const caches = join(home, 'Library/Caches/com.test.chat');
     const data = join(home, 'Library/Application Support/Chat');
     await mkdir(caches, { recursive: true });

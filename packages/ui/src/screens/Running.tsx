@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { CleanupPlan, ItemStatus } from '@macsweep/core/types';
+import type { CleanupPlan, ItemStatus } from '@diskwise/core/types';
 import { runItems as mockPlanItems } from '../mock/data';
 import type { RunItem } from '../mock/types';
 import { useMock } from '../api/client';

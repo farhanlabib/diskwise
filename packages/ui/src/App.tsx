@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { CleanupPlan, Finding, Tier } from '@macsweep/core/types';
+import type { CleanupPlan, Finding, Tier } from '@diskwise/core/types';
 import { Sidebar, type NavItem } from './components/Sidebar';
 import { Toolbar } from './components/Toolbar';
 import { Apps } from './screens/Apps';
@@ -169,11 +169,11 @@ export function App() {
   useEffect(() => {
     const onUnauthorized = () => navigate('#/session/invalid-link');
     const onDisconnected = () => navigate('#/session/stopped');
-    window.addEventListener('macsweep:unauthorized', onUnauthorized);
-    window.addEventListener('macsweep:disconnected', onDisconnected);
+    window.addEventListener('diskwise:unauthorized', onUnauthorized);
+    window.addEventListener('diskwise:disconnected', onDisconnected);
     return () => {
-      window.removeEventListener('macsweep:unauthorized', onUnauthorized);
-      window.removeEventListener('macsweep:disconnected', onDisconnected);
+      window.removeEventListener('diskwise:unauthorized', onUnauthorized);
+      window.removeEventListener('diskwise:disconnected', onDisconnected);
     };
   }, [navigate]);
 
@@ -182,8 +182,8 @@ export function App() {
     setBootstrapped(true);
     if (permissions.fullDiskAccess === 'granted') {
       if (route.name === 'overview') navigate('#/scanning');
-    } else if (window.localStorage.getItem('macsweep.onboarded') !== '1') {
-      window.localStorage.setItem('macsweep.onboarded', '1');
+    } else if (window.localStorage.getItem('diskwise.onboarded') !== '1') {
+      window.localStorage.setItem('diskwise.onboarded', '1');
       navigate('#/onboarding');
     }
   }, [invalidLink, bootstrapped, permissions, route.name, navigate]);

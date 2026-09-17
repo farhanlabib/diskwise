@@ -35,7 +35,7 @@ async function writeProject(dir: string, lockfile: string | null, ageDays: numbe
 }
 
 beforeAll(async () => {
-  home = await realpath(await mkdtemp(join(tmpdir(), 'macsweep-matchers-')));
+  home = await realpath(await mkdtemp(join(tmpdir(), 'diskwise-matchers-')));
 
   await writeProject(join(home, 'proj-stale'), 'package-lock.json', 60);
   await writeProject(join(home, 'proj-fresh'), 'package-lock.json', 0);

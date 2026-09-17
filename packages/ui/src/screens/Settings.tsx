@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { AuditResult } from '@macsweep/core/types';
+import type { AuditResult } from '@diskwise/core/types';
 import { serverInfo } from '../mock/data';
 import { useMock } from '../api/client';
 import { auditMarkdown, downloadMarkdown } from '../lib/markdown';
@@ -38,7 +38,7 @@ export function Settings({
   const exportMarkdown = () => {
     if (!audit) return;
     const markdown = auditMarkdown(audit, { redact: values.redact });
-    downloadMarkdown(`macsweep-report-${audit.generatedAt.slice(0, 10)}.md`, markdown);
+    downloadMarkdown(`diskwise-report-${audit.generatedAt.slice(0, 10)}.md`, markdown);
   };
 
   return (
@@ -56,6 +56,7 @@ export function Settings({
                   <button
                     key={option.value}
                     type="button"
+                    data-testid={`theme-${option.value}`}
                     onClick={() => setTheme(option.value)}
                     className="cursor-pointer rounded-[7px] border border-card-line px-[12px] py-[5px] text-[12px]"
                     style={{
@@ -125,7 +126,7 @@ export function Settings({
         <div className="rounded-[10px] border border-card-line bg-card p-[18px]">
           <div className="mb-[8px] text-[13px] [font-weight:600]">About</div>
           <div className="text-[12.5px] leading-[1.6] text-text2">
-            MacSweep v1.0 · Open source, MIT ·{' '}
+            DiskWise v1.0 · Open source, MIT ·{' '}
             <span className="text-text">No outbound network. No telemetry.</span>
           </div>
           <div className="mt-[12px] flex gap-[10px]">

@@ -32,17 +32,17 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: packages/native-helper/build.sh
-      - run: pnpm -F @macsweep/ui build
-      - run: pnpm -F macsweep build
+      - run: pnpm -F @diskwise/ui build
+      - run: pnpm -F @farhanlabib/diskwise build
       - name: Verify the helper is ad-hoc signed
-        run: codesign -dv packages/cli/dist/macsweep-helper 2>&1 | grep -q 'Signature=adhoc'
+        run: codesign -dv packages/cli/dist/diskwise-helper 2>&1 | grep -q 'Signature=adhoc'
       - name: Checksum the native helper
-        run: shasum -a 256 packages/cli/dist/macsweep-helper > macsweep-helper.sha256
+        run: shasum -a 256 packages/cli/dist/diskwise-helper > diskwise-helper.sha256
       - name: Publish to npm
         run: cd packages/cli && npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Create the GitHub release
-        run: gh release create ${{ github.ref_name }} macsweep-helper.sha256 --generate-notes
+        run: gh release create ${{ github.ref_name }} diskwise-helper.sha256 --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}

@@ -7,7 +7,7 @@ import type {
   Finding,
   PlanItem,
   Tier,
-} from '@macsweep/core/types';
+} from '@diskwise/core/types';
 import { apps, locationGroups } from './data';
 
 function actionFor(finding: Finding): ActionId {

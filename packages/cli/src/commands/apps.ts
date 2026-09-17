@@ -1,6 +1,6 @@
 import { homedir } from 'node:os';
 import { Command } from 'commander';
-import { formatBytes } from '@macsweep/report';
+import { formatBytes } from '@diskwise/report';
 import {
   buildAppPlan,
   buildAppReports,
@@ -10,8 +10,8 @@ import {
   executePlan,
   listInstalledApps,
   openJournal,
-} from '@macsweep/core';
-import type { AppLocationKind, AppReport, ItemResult } from '@macsweep/core/types';
+} from '@diskwise/core';
+import type { AppLocationKind, AppReport, ItemResult } from '@diskwise/core/types';
 import { findOrphanedAppData } from '../../../core/src/apps/orphans';
 import { promptImpl } from '../prompt';
 import type { IO } from '../program';

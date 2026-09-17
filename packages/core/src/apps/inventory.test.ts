@@ -32,7 +32,7 @@ const OTHER_PLIST = `<?xml version="1.0" encoding="UTF-8"?>
 const roots: string[] = [];
 
 async function makeRoot(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'macsweep-apps-inventory-'));
+  const dir = await mkdtemp(join(tmpdir(), 'diskwise-apps-inventory-'));
   roots.push(dir);
   return dir;
 }

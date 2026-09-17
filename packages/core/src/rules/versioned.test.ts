@@ -20,7 +20,7 @@ async function makeDirs(...names: string[]): Promise<void> {
 }
 
 beforeAll(async () => {
-  home = await realpath(await mkdtemp(join(tmpdir(), 'macsweep-versioned-')));
+  home = await realpath(await mkdtemp(join(tmpdir(), 'diskwise-versioned-')));
 
   await makeDirs(
     'ios/15.0 (A)',

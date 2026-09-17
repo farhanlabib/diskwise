@@ -20,7 +20,7 @@ async function rejectionCode(promise: Promise<unknown>): Promise<string | undefi
 
 beforeAll(async () => {
   const tmp = await fs.realpath(os.tmpdir());
-  base = await fs.mkdtemp(path.join(tmp, 'macsweep-identity-'));
+  base = await fs.mkdtemp(path.join(tmp, 'diskwise-identity-'));
 });
 
 afterAll(async () => {

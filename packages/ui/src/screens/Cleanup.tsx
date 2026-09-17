@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { Category, Finding, Tier } from '@macsweep/core/types';
+import type { Category, Finding, Tier } from '@diskwise/core/types';
 import { Badge } from '../components/Badge';
 import { DetailPanel, DetailSection } from '../components/DetailPanel';
 import { EmptyState } from '../components/EmptyState';

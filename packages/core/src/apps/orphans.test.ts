@@ -8,7 +8,7 @@ import { findOrphanedAppData } from './orphans';
 const homes: string[] = [];
 
 async function makeHome(): Promise<string> {
-  const home = await realpath(await mkdtemp(join(tmpdir(), 'macsweep-orphans-')));
+  const home = await realpath(await mkdtemp(join(tmpdir(), 'diskwise-orphans-')));
   homes.push(home);
   return home;
 }
@@ -173,7 +173,7 @@ describe('orphan name filtering', () => {
     const { mkdtemp, mkdir, writeFile, realpath } = await import('node:fs/promises');
     const { tmpdir } = await import('node:os');
     const { join } = await import('node:path');
-    const home = await realpath(await mkdtemp(join(tmpdir(), 'macsweep-orphan-names-')));
+    const home = await realpath(await mkdtemp(join(tmpdir(), 'diskwise-orphan-names-')));
     for (const name of ['warp.log.old.1', 'com.old.editor']) {
       await mkdir(join(home, 'Library/Caches', name), { recursive: true });
       await writeFile(join(home, 'Library/Caches', name, 'blob'), Buffer.alloc(200_000, 1));

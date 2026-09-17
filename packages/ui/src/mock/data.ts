@@ -1,4 +1,4 @@
-import type { AuditResult, DiskInfo, Finding, PermissionStatus, Tier, Trap } from '@macsweep/core/types';
+import type { AuditResult, DiskInfo, Finding, PermissionStatus, Tier, Trap } from '@diskwise/core/types';
 import type {
   AppEntry,
   AppLocationGroup,
@@ -157,7 +157,7 @@ export const findings: Finding[] = [
     title: 'Docker volumes (4)',
     category: 'system',
     tier: 3,
-    rationale: 'Named Docker volumes — Postgres, Redis and MySQL data. MacSweep never deletes these.',
+    rationale: 'Named Docker volumes — Postgres, Redis and MySQL data. DiskWise never deletes these.',
     regeneration: 'Not applicable — protected.',
     action: null,
     needsRoot: false,
@@ -274,7 +274,7 @@ export const systemBuckets: SystemBucket[] = [
     sizeLabel: '7.7 GB',
     path: '/private/var',
     what: 'Swap files, system databases and temporary files. macOS manages the size of these automatically.',
-    safe: 'Protected. MacSweep never touches these — deleting them can corrupt the system.',
+    safe: 'Protected. DiskWise never touches these — deleting them can corrupt the system.',
     reviewable: false,
   },
   {
@@ -327,7 +327,7 @@ export const systemBuckets: SystemBucket[] = [
     sizeLabel: '11.6 GB',
     path: 'various',
     what:
-      'Areas MacSweep couldn’t read: SIP-protected paths and folders that need root. Shown as a hatched bucket so the total always adds up honestly.',
+      'Areas DiskWise couldn’t read: SIP-protected paths and folders that need root. Shown as a hatched bucket so the total always adds up honestly.',
     safe:
       'Not actionable. These bytes exist but can’t be safely inspected without elevated access.',
     reviewable: false,

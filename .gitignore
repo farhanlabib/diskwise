@@ -10,3 +10,6 @@ packages/native-helper/bin/
 # Recordings from a real Mac: they contain personal paths and project names.
 fixtures/baseline/audit.redacted.json
 fixtures/probes/*.local.json
+
+test-results/
+playwright-report/

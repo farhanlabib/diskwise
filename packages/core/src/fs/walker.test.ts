@@ -11,7 +11,7 @@ const roots: string[] = [];
 const lockedDirs: string[] = [];
 
 async function makeRoot(prefix: string): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), `macsweep-${prefix}-`));
+  const dir = await mkdtemp(join(tmpdir(), `diskwise-${prefix}-`));
   roots.push(dir);
   return dir;
 }

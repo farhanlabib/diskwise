@@ -8,7 +8,7 @@ import { createReplayRunner, recordProbe, recordingKey } from './replay';
 let dir: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'macsweep-replay-'));
+  dir = await mkdtemp(join(tmpdir(), 'diskwise-replay-'));
 });
 
 afterEach(async () => {

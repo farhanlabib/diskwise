@@ -207,7 +207,7 @@ export const cacheRules: Rule[] = [
     manualCommand: 'sudo rm -rf /Library/Developer/CoreSimulator/Caches/dyld/*',
     preflight: { bootedSimulators: true },
     rationale:
-      'System-wide dyld shared caches shared by all users; they are rebuilt on demand from the installed simulator runtimes, so removing them loses nothing but is a root operation macsweep will not run for you.',
+      'System-wide dyld shared caches shared by all users; they are rebuilt on demand from the installed simulator runtimes, so removing them loses nothing but is a root operation diskwise will not run for you.',
     regeneration:
       'Nothing to download. The caches are rebuilt from local runtime images at the next simulator boot.',
   },
@@ -259,7 +259,7 @@ export const cacheRules: Rule[] = [
     action: null,
     manualCommand: 'ollama list',
     rationale:
-      'Downloaded model weights are usually kept on purpose so they run offline, and macsweep cannot tell which ones you still use — remove one deliberately with `ollama rm <model>`.',
+      'Downloaded model weights are usually kept on purpose so they run offline, and diskwise cannot tell which ones you still use — remove one deliberately with `ollama rm <model>`.',
     regeneration:
       'Anything you remove must be pulled again with `ollama pull`, which costs network bandwidth.',
   },

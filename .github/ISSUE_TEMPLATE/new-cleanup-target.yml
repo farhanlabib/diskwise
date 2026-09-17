@@ -1,5 +1,5 @@
 name: New cleanup target
-description: Propose a new cleanup rule for a location macsweep does not cover yet.
+description: Propose a new cleanup rule for a location diskwise does not cover yet.
 title: '[NEW TARGET] '
 labels: ['new-target']
 body:

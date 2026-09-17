@@ -1,4 +1,4 @@
-# macsweep — Task Breakdown
+# diskwise — Task Breakdown
 
 Based on `PLAN.md` with the adjustments in `AUDIT.md` applied. IDs are stable. `deps` lists blocking tasks. Size: S ≤ ½ day, M ≈ 1–2 days, L ≈ 3–5 days.
 
@@ -8,7 +8,7 @@ Based on `PLAN.md` with the adjustments in `AUDIT.md` applied. IDs are stable. `
 
 | ID | Task | Size | Deps | Done when |
 |---|---|---|---|---|
-| P0-1 | Check `macsweep` / `@macsweep` on npm, Homebrew and GitHub. Do a quick trademark check on "Mac" in the app name | S | — | Names chosen and written into PLAN §2 |
+| P0-1 | Check `diskwise` / `@diskwise` on npm, Homebrew and GitHub. Do a quick trademark check on "Mac" in the app name | S | — | Names chosen and written into PLAN §2 |
 | P0-2 | ~~Fold the AUDIT.md adjustments into PLAN.md~~ **Done (PLAN v2, includes Apps feature)** | S | — | PLAN.md updated, AUDIT marked resolved |
 | P0-5 | ~~Apple Developer ID~~ **Not needed.** Create a `homebrew-tap` repo instead | S | P0-4 | Tap repo exists |
 | P0-3 | Pin decisions: macOS ≥ 14, Apple Silicon + Intel, Node ≥ 20, ESM, tsup build, drop update check in v1 | S | — | Listed in PLAN §2 |
@@ -59,7 +59,7 @@ Based on `PLAN.md` with the adjustments in `AUDIT.md` applied. IDs are stable. `
 |---|---|---|---|---|
 | PL-1 | `scan/`: run rules with bounded concurrency → `Finding[]` (with dev/ino identity) | M | R-2 | Integration test over fixture home |
 | PL-2 | `plan/`: findings → `CleanupPlan` with per-tier totals, serializable to `plan.json` | S | PL-1 | Round-trip test |
-| RP-1 | `@macsweep/report`: table formatter grouped by tier with "because … · restore cost …" | M | PL-2 | Snapshot tests |
+| RP-1 | `@diskwise/report`: table formatter grouped by tier with "because … · restore cost …" | M | PL-2 | Snapshot tests |
 | RP-2 | JSON formatter with versioned schema | S | PL-2 | Snapshot tests |
 | CLI-1 | CLI skeleton (commander or clipanion), `audit`, `audit --json`, `audit --category`, `plan --tier` | M | RP-1, RP-2 | `node packages/cli/dist/index.js audit` runs on this Mac |
 | CLI-2 | `rules list` / `rules show <id>` | S | CLI-1 | Output reviewed |
@@ -77,7 +77,7 @@ Based on `PLAN.md` with the adjustments in `AUDIT.md` applied. IDs are stable. `
 | EX-3 | Native helper v1 (Swift CLI in `packages/native-helper`, universal binary, **ad-hoc signed** `codesign -s -`, built by `pnpm build:helper` and in CI): `trash <path>` → returns trashed URL | M | EX-1 | Trash + Put Back works; cross-volume test; `codesign -dv` shows adhoc |
 | EX-4 | `trash-path` executor using EX-3 | S | EX-3 | Journal stores trashed URL |
 | EX-5 | Package-manager executors: `brew-cleanup`, `npm-cache-clean`, `pnpm-store-prune`, `yarn-cache-clean` (classic only), `uv-cache-clean`, `go-clean` (split build/mod) | M | EX-1, SRC-3 | Replay tests + macOS smoke when tools present |
-| J-1 | `journal.ts`: WAL intent/result JSONL at `~/.macsweep/journal/`, lockfile `~/.macsweep/lock` | M | EX-1 | Crash-mid-run test leaves intent without result |
+| J-1 | `journal.ts`: WAL intent/result JSONL at `~/.diskwise/journal/`, lockfile `~/.diskwise/lock` | M | EX-1 | Crash-mid-run test leaves intent without result |
 | U-1 | `undo --last`: restore trashed items from recorded URLs, report unrestorable | M | J-1, EX-4 | Synthetic T2 test rule round-trip |
 | R-8 | Tier 0/1 rules: `xcode.module-cache`, `homebrew.cache`, `node.npm-cache`, `node.pnpm-store`, `node.yarn-cache`, `node.gyp-cache`, `python.uv-cache`, `python.pip-cache`, `go.build-cache`, `go.mod-cache`, `rust.cargo-cache`, `ruby.cocoapods-cache`, `browser.code-cache`, `app.logs`; `simulator.dyld-cache` as needsRoot copy-paste | L | R-2, EX-5 | Per-rule fixture tests; tiers per AUDIT B8 |
 | CLI-3 | `clean` (dry-run default), `--apply`, `--tier`, `--plan plan.json`, `--interactive`; non-TTY refuses T2 | M | EX-1, J-1 | E2E on fixture home |
@@ -109,21 +109,21 @@ Based on `PLAN.md` with the adjustments in `AUDIT.md` applied. IDs are stable. `
 | DOC-4 | `docs/app-profiles.md` + `new-app-profile.yml` issue template | S | AP-5 | Reviewed |
 | V03 | Verify on this Mac against V01 baseline (±10% or explained) | S | all above | Checklist in PLAN §12 passes |
 
-## Phase 5 — v0.4 Local web UI `macsweep ui` (audit + Tier 0/1)
+## Phase 5 — v0.4 Local web UI `diskwise ui` (audit + Tier 0/1)
 
 | ID | Task | Size | Deps | Done when |
 |---|---|---|---|---|
 | DS-0 | Run DESIGN_PROMPT.md through Claude Design; export tokens (colors, tier badges, spacing) | M | — (can start any time) | Design files + tokens committed |
-| APP-1 | `packages/ui`: Vite + React + Tailwind scaffold, system font stack, no external assets, build output embedded into the CLI package | M | S-1 | `pnpm -F @macsweep/ui build` emits static assets; no network URLs in bundle |
+| APP-1 | `packages/ui`: Vite + React + Tailwind scaffold, system font stack, no external assets, build output embedded into the CLI package | M | S-1 | `pnpm -F @diskwise/ui build` emits static assets; no network URLs in bundle |
 | APP-2 | `packages/server`: `node:http` loopback server (127.0.0.1, random port), small router, serves embedded UI assets, job manager (scan/execute as cancellable jobs), SSE progress stream, idle shutdown | M | PL-2 | Cancel mid-scan works; server exits on Ctrl-C and after idle timeout |
 | APP-3 | API contract + security: shared zod schemas; per-run 256-bit token (URL fragment → `sessionStorage` → Bearer header); Host allowlist (anti DNS rebinding); reject foreign Origin; JSON-only POST; no CORS; CSP + frame-ancestors none; execute accepts only server-issued plan id + finding ids | M | APP-2 | Security suite: 401 bad token, 403 foreign Host/Origin, 415 form POST, no raw-path delete endpoint |
-| APP-3b | `macsweep ui [--port] [--no-open]` command: start server, print URL, `open` it | S | APP-2, CLI-1 | Opens in default browser |
-| APP-3c | Playwright e2e against `macsweep ui --no-open` on fixture home | M | APP-3b | Scan → Apps → clean caches → undo passes in macOS CI |
+| APP-3b | `diskwise ui [--port] [--no-open]` command: start server, print URL, `open` it | S | APP-2, CLI-1 | Opens in default browser |
+| APP-3c | Playwright e2e against `diskwise ui --no-open` on fixture home | M | APP-3b | Scan → Apps → clean caches → undo passes in macOS CI |
 | APP-4 | Screens: Permissions onboarding (detect host terminal app to grant FDA, restart hint), Scanning | M | APP-3, DS-0, SRC-2 | FDA status updates after restart |
 | APP-5 | Overview (segmented bar, largest wins, trap card) | M | APP-4 | Numbers equal CLI `audit --json` |
 | APP-6 | System Data explainer with Unmeasured bucket + detail panel | M | APP-5, SD-1 | Matches `audit --explain` |
 | APP-10 | Native helper `icon <app path>` → PNG, cached | S | EX-3 | Icons render in list |
-| APP-11 | **Apps screen**: searchable/sortable list, filters, app detail with location group cards, Quit app, "Clean caches" → Review sheet | L | APP-5, CLI-7, APP-10 | Numbers equal `macsweep apps --json`; running app blocks clean |
+| APP-11 | **Apps screen**: searchable/sortable list, filters, app detail with location group cards, Quit app, "Clean caches" → Review sheet | L | APP-5, CLI-7, APP-10 | Numbers equal `diskwise apps --json`; running app blocks clean |
 | APP-7 | Cleanup list (tiers, blocked/root/protected states, detail panel, sticky footer) | L | APP-5 | Keyboard navigation works |
 | APP-8 | Review sheet + Running/Result (T0/T1 only in v0.4) | M | APP-7, CLI-3 | E2E on fixture home |
 | APP-9 | No-outbound test: run CLI + UI server e2e with outbound connections blocked; assert bundle has no external URLs | S | APP-3c | Test green |
@@ -144,8 +144,8 @@ Based on `PLAN.md` with the adjustments in `AUDIT.md` applied. IDs are stable. `
 
 | ID | Task | Size | Deps | Done when |
 |---|---|---|---|---|
-| REL-1 | npm publish pipeline (changesets); CLI bundles UI assets + ad-hoc-signed universal helper | M | all v0.5 | `npx macsweep audit` and `npx macsweep ui` work on a fresh macOS user with no Gatekeeper prompt |
-| REL-2 | Homebrew formula in own tap (`<owner>/homebrew-tap`): depends on node, builds helper from source with Xcode CLT | M | REL-1, P0-5 | `brew install <owner>/tap/macsweep && macsweep ui` works |
+| REL-1 | npm publish pipeline (changesets); CLI bundles UI assets + ad-hoc-signed universal helper | M | all v0.5 | `npx diskwise audit` and `npx diskwise ui` work on a fresh macOS user with no Gatekeeper prompt |
+| REL-2 | Homebrew formula in own tap (`<owner>/homebrew-tap`): depends on node, builds helper from source with Xcode CLT | M | REL-1, P0-5 | `brew install <owner>/tap/diskwise && diskwise ui` works |
 | REL-3 | Release provenance without Apple: npm `--provenance` from GitHub Actions, SHA-256 checksums in GitHub Release, documented build-from-source steps | S | REL-1 | Provenance badge on npm; checksums match a local build of the helper |
 | DOC-2 | README (pitch, 60-second demo GIF, zero-telemetry statement, "why no .app" note), `docs/architecture.md`, publish `docs/system-data.md` | M | CLI-5 | Reviewed |
 | DOC-3 | CONTRIBUTING "add a cleanup target" walkthrough + issue templates (dangerous-rule, new-target) | S | R-6 | A test contributor adds a rule using only the guide |

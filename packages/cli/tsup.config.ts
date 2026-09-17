@@ -7,5 +7,5 @@ export default defineConfig({
   target: 'node20',
   clean: true,
   // Workspace packages export TypeScript source, so they are bundled into the CLI.
-  noExternal: [/^@macsweep\//],
+  noExternal: [/^@diskwise\//],
 });

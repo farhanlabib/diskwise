@@ -1,8 +1,8 @@
-# macsweep
+# diskwise
 
-macsweep is an open-source macOS disk cleanup tool that **explains where your space went** and **only deletes what is provably safe**.
+diskwise is an open-source macOS disk cleanup tool that **explains where your space went** and **only deletes what is provably safe**.
 
-macOS reports a vague "System Data" bucket that swallows tens of gigabytes with no explanation. Generic cleaners either show _where_ the space is without explaining _what it is_, or delete aggressively with weak rationale. macsweep's product is the reasoning, not the deletion.
+macOS reports a vague "System Data" bucket that swallows tens of gigabytes with no explanation. Generic cleaners either show _where_ the space is without explaining _what it is_, or delete aggressively with weak rationale. diskwise's product is the reasoning, not the deletion.
 
 - **It decomposes "System Data"** into named, sized, explained buckets, including an honest **Unmeasured** bucket for what can't be read.
 - **It never lies about sizes.** It reports _allocated_ bytes (and _reclaimable_ bytes once APFS clones are understood), never apparent bytes. Hardlinks and clones are never double-counted.
@@ -29,7 +29,7 @@ A real audit of the machine this project was derived from found:
 - **Safety tiers** — every target carries a tier, a rationale, and a restore cost (see below).
 - **Per-app caches** — one app at a time, cache folders only, with sign-in and app data kept report-only.
 - **Old macOS leftovers** — installers, staging data, old SDKs, and Device Support from previous OS versions, in their own category.
-- **Local web UI** — `macsweep ui` serves a browser interface on `127.0.0.1` only. No Electron, no `.app`, nothing to notarize.
+- **Local web UI** — `diskwise ui` serves a browser interface on `127.0.0.1` only. No Electron, no `.app`, nothing to notarize.
 
 ## Safety tiers
 
@@ -40,23 +40,24 @@ A real audit of the machine this project was derived from found:
 | 2    | `USER_DATA`   | Contains real user data                                                                            | **Move to Trash**. Permanent only with `clean --apply --permanent` and a typed phrase |
 | 3    | `NEVER`       | Explained for education, **never** actionable. May show a manual command                           | No action exists                                                     |
 
-Tier 3 is a feature, not a gap: it is how macsweep explains swap, `/private/var/db`, Keychains, snapshots, and Docker volumes without ever offering to break the machine.
+Tier 3 is a feature, not a gap: it is how diskwise explains swap, `/private/var/db`, Keychains, snapshots, and Docker volumes without ever offering to break the machine.
 
 ## Install
 
 ```sh
 # Try it without installing anything:
-npx macsweep audit
+npx @farhanlabib/diskwise audit          # no install
+npm i -g @farhanlabib/diskwise          # then just: diskwise audit
 
 # Build from source (Node 20+ and Xcode Command Line Tools):
 pnpm install
 packages/native-helper/build.sh
-pnpm -F @macsweep/ui build
-pnpm -F macsweep build
+pnpm -F @diskwise/ui build
+pnpm -F @farhanlabib/diskwise build
 node packages/cli/dist/index.js audit
 
 # Homebrew tap (coming with v0.1.0):
-brew install <owner>/tap/macsweep
+brew install <owner>/tap/diskwise
 ```
 
 Requirements: macOS 14 Sonoma or later, on Apple Silicon or Intel, with Node.js 20+.
@@ -64,46 +65,46 @@ Requirements: macOS 14 Sonoma or later, on Apple Silicon or Intel, with Node.js 
 ## Usage
 
 ```sh
-macsweep audit                         # full report, decomposed, with tiers
-macsweep audit --json                  # machine-readable, versioned schema
-macsweep audit --explain               # teaching mode: what "System Data" really is
-macsweep audit --category dev|system|browser|app|user-data|os-leftovers
-macsweep doctor                        # xcode/docker/brew/node/... versions, Full Disk Access status
-macsweep apps                          # installed apps sorted by reclaimable cache
-macsweep apps show <name|bundleId>     # one app: caches, logs, data, sign-in data, running state
-macsweep apps --orphans                # data left behind by uninstalled apps
-macsweep plan --tier 0,1 [-o plan.json]
-macsweep clean --tier 0 --apply
-macsweep apps clean slack --apply      # clean one app's caches, logs and saved state (never app data)
-macsweep clean --plan plan.json --apply
-macsweep clean --interactive           # per-item prompts
-macsweep undo --last
-macsweep history
-macsweep rules list | rules show <id>
-macsweep report --markdown --redact > disk-report.md
-macsweep ui [--port 0] [--no-open]    # start the local web UI on 127.0.0.1 and open the browser
+diskwise audit                         # full report, decomposed, with tiers
+diskwise audit --json                  # machine-readable, versioned schema
+diskwise audit --explain               # teaching mode: what "System Data" really is
+diskwise audit --category dev|system|browser|app|user-data|os-leftovers
+diskwise doctor                        # xcode/docker/brew/node/... versions, Full Disk Access status
+diskwise apps                          # installed apps sorted by reclaimable cache
+diskwise apps show <name|bundleId>     # one app: caches, logs, data, sign-in data, running state
+diskwise apps --orphans                # data left behind by uninstalled apps
+diskwise plan --tier 0,1 [-o plan.json]
+diskwise clean --tier 0 --apply
+diskwise apps clean slack --apply      # clean one app's caches, logs and saved state (never app data)
+diskwise clean --plan plan.json --apply
+diskwise clean --interactive           # per-item prompts
+diskwise undo --last
+diskwise history
+diskwise rules list | rules show <id>
+diskwise report --markdown --redact > disk-report.md
+diskwise ui [--port 0] [--no-open]    # start the local web UI on 127.0.0.1 and open the browser
 ```
 
-`macsweep clean` is a dry run by default. It prints a plan and exits; nothing is deleted without `--apply`.
+`diskwise clean` is a dry run by default. It prints a plan and exits; nothing is deleted without `--apply`.
 
 ## Privacy
 
 - **No telemetry. Ever.**
 - **No outbound network calls at all.** Updates come through npm or Homebrew; there is no in-app update check. This is enforced by lint rules that ban the network modules, and by tests that run the CLI and UI with outbound connections blocked.
 - The web UI listens on `127.0.0.1` only, uses a per-session token, and shuts down with the CLI process.
-- `macsweep report --markdown --redact` rewrites your home folder, hostnames, and volume names before you share a report.
+- `diskwise report --markdown --redact` rewrites your home folder, hostnames, and volume names before you share a report.
 
 ## Full Disk Access
 
-macOS hides some folders (`~/Library/Safari`, parts of `~/Library/Mail`, `~/Library/Messages`, and other apps' containers) from every process without Full Disk Access. macsweep reports what it could not read instead of hiding it, and names the app you should grant access to.
+macOS hides some folders (`~/Library/Safari`, parts of `~/Library/Mail`, `~/Library/Messages`, and other apps' containers) from every process without Full Disk Access. diskwise reports what it could not read instead of hiding it, and names the app you should grant access to.
 
-Grant Full Disk Access to **your terminal app** (Terminal, iTerm2, Ghostty, Warp, or VS Code) in System Settings → Privacy & Security → Full Disk Access, then restart `macsweep`. Without it, macsweep still works, but more of the disk shows up as Unreadable and containers are skipped rather than prompting.
+Grant Full Disk Access to **your terminal app** (Terminal, iTerm2, Ghostty, Warp, or VS Code) in System Settings → Privacy & Security → Full Disk Access, then restart `diskwise`. Without it, diskwise still works, but more of the disk shows up as Unreadable and containers are skipped rather than prompting.
 
 ## Why no `.app`?
 
 Shipping a downloadable `.app` needs an Apple Developer account: without notarization, macOS 15+ makes users click through Gatekeeper, and an ad-hoc signed app's Full Disk Access grant is tied to its code hash, so it is lost on every update.
 
-So there is no `.app`. `macsweep ui` runs inside the CLI process and **reuses your terminal's Full Disk Access**. Nothing needs signing, nothing needs a paid account, and every artifact is buildable from source with free tools.
+So there is no `.app`. `diskwise ui` runs inside the CLI process and **reuses your terminal's Full Disk Access**. Nothing needs signing, nothing needs a paid account, and every artifact is buildable from source with free tools.
 
 ## Status
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Command } from 'commander';
-import type { DiskInfo, PermissionStatus } from '@macsweep/core/types';
+import type { DiskInfo, PermissionStatus } from '@diskwise/core/types';
 import type { ToolInfo } from '../../../core/src/sources/tools';
 import type { IO } from '../program';
 import { registerDoctorCommand, type DoctorDeps } from './doctor';
@@ -28,7 +28,7 @@ function harness(deps: DoctorDeps) {
   program.exitOverride();
   program.configureOutput({ writeOut: (s) => out.push(s), writeErr: (s) => err.push(s) });
   registerDoctorCommand(program, io, deps);
-  return { out, err, run: (argv: string[]) => program.parseAsync(['node', 'macsweep', ...argv]) };
+  return { out, err, run: (argv: string[]) => program.parseAsync(['node', 'diskwise', ...argv]) };
 }
 
 function fakedDeps(overrides: DoctorDeps = {}): DoctorDeps {
@@ -36,7 +36,7 @@ function fakedDeps(overrides: DoctorDeps = {}): DoctorDeps {
     macos: async () => '15.1',
     disk: async () => disk,
     permissions: async () => ({ fullDiskAccess: 'granted', hostApp: 'Droppy Code' }),
-    helper: async () => ({ path: '/opt/macsweep-helper', version: '1.0.0' }),
+    helper: async () => ({ path: '/opt/diskwise-helper', version: '1.0.0' }),
     tools: async () => tools,
     ...overrides,
   };
@@ -52,7 +52,7 @@ describe('doctor command', () => {
     expect(text).toContain('Disk (Macintosh HD): 1.0 TB total · 400.0 GB used · 600.0 GB free');
     expect(text).toContain('Full Disk Access: granted');
     expect(text).toContain('Host app: Droppy Code');
-    expect(text).toContain('Native helper: /opt/macsweep-helper (1.0.0)');
+    expect(text).toContain('Native helper: /opt/diskwise-helper (1.0.0)');
     expect(text).toContain('Xcode');
     expect(text).toContain('16.0');
     expect(text).toContain('Docker');
@@ -93,7 +93,7 @@ describe('doctor command', () => {
     expect(parsed.macos).toBe('15.1');
     expect(parsed.disk.volumeName).toBe('Macintosh HD');
     expect(parsed.permissions.fullDiskAccess).toBe('granted');
-    expect(parsed.helper.path).toBe('/opt/macsweep-helper');
+    expect(parsed.helper.path).toBe('/opt/diskwise-helper');
     expect(parsed.tools).toEqual(tools);
   });
 

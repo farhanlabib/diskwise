@@ -1,6 +1,17 @@
 import { useEffect, useState } from 'react';
 import { fetchBlob, useMock } from '../api/client';
 
+// The page CSP allows img-src 'self' data: but not blob:, so icons are inlined
+// as data URLs instead of object URLs.
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
 export function AppIcon({
   name,
   color,
@@ -24,19 +35,16 @@ export function AppIcon({
       return undefined;
     }
     let active = true;
-    let objectUrl: string | null = null;
     fetchBlob(`/api/apps/${encodeURIComponent(bundleId)}/icon`)
-      .then((blob) => {
-        if (!active) return;
-        objectUrl = URL.createObjectURL(blob);
-        setIconUrl(objectUrl);
+      .then((blob) => blobToDataUrl(blob))
+      .then((dataUrl) => {
+        if (active) setIconUrl(dataUrl);
       })
       .catch(() => {
         if (active) setIconUrl(null);
       });
     return () => {
       active = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [bundleId]);
 

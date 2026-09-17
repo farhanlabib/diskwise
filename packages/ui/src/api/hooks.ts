@@ -9,7 +9,7 @@ import type {
   PlanSelection,
   RunSummary,
   UndoItemResult,
-} from '@macsweep/core/types';
+} from '@diskwise/core/types';
 import { api, streamJob, useMock } from './client';
 import { createStore } from './store';
 import { audit as mockAudit, history as mockHistory, permissions as mockPermissions } from '../mock/data';

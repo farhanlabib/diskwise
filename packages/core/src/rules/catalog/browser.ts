@@ -17,7 +17,7 @@ export const browserRules: Rule[] = [
     preflight: { processes: ['Google Chrome'] },
     minBytes: 200e6,
     rationale:
-      'Each “Profile *” folder is a whole extra Chrome profile: its own history, passwords, extensions and cookies. Only remove profiles you no longer use, and sign in to Chrome sync with the account first so your data is backed up elsewhere — macsweep only ever moves these to the Trash.',
+      'Each “Profile *” folder is a whole extra Chrome profile: its own history, passwords, extensions and cookies. Only remove profiles you no longer use, and sign in to Chrome sync with the account first so your data is backed up elsewhere — diskwise only ever moves these to the Trash.',
     regeneration:
       'Recoverable from the Trash until it is emptied; otherwise re-created empty.',
   },
@@ -37,7 +37,7 @@ export const browserRules: Rule[] = [
     preflight: { processes: ['Brave Browser'] },
     minBytes: 200e6,
     rationale:
-      'Each “Profile *” folder is a whole extra Brave profile: its own history, passwords, extensions and cookies. Only remove profiles you no longer use, and sign in to Brave sync with the account first so your data is backed up elsewhere — macsweep only ever moves these to the Trash.',
+      'Each “Profile *” folder is a whole extra Brave profile: its own history, passwords, extensions and cookies. Only remove profiles you no longer use, and sign in to Brave sync with the account first so your data is backed up elsewhere — diskwise only ever moves these to the Trash.',
     regeneration:
       'Recoverable from the Trash until it is emptied; otherwise re-created empty.',
   },

@@ -104,7 +104,7 @@ export const osLeftoverRules: Rule[] = [
     manualCommand:
       'Open System Settings → Wallpaper, right-click a downloaded aerial and choose Delete',
     rationale:
-      'Aerial screensaver videos downloaded by macOS; they can be several GB, but System Settings owns their lifecycle so macsweep only explains how to remove them.',
+      'Aerial screensaver videos downloaded by macOS; they can be several GB, but System Settings owns their lifecycle so diskwise only explains how to remove them.',
     regeneration:
       'macOS re-downloads any aerial you pick again, which costs a few GB of bandwidth.',
   },

@@ -1,4 +1,4 @@
-import type { AuditResult, Finding, Tier } from '@macsweep/core';
+import type { AuditResult, Finding, Tier } from '@diskwise/core';
 import { formatBytes } from './format-bytes';
 
 const RESET = '\x1b[0m';
@@ -39,7 +39,14 @@ function titleWithBadges(finding: Finding): string {
   if (finding.blockedBy && finding.blockedBy.length > 0) {
     badges.push(`[blocked: ${finding.blockedBy.join(', ')}]`);
   }
-  return badges.length > 0 ? `${finding.title} ${badges.join(' ')}` : finding.title;
+  const title = badges.length > 0 ? `${finding.title} ${badges.join(' ')}` : finding.title;
+  // Clone-aware sizing can report much less than allocated when APFS clones share
+  // blocks: say so on the row rather than letting the allocated figure mislead.
+  const reclaimable = finding.totals.reclaimable;
+  if (reclaimable !== undefined && reclaimable < 0.95 * finding.totals.allocated) {
+    return `${title} (frees ~${formatBytes(reclaimable)}; rest shared with clones)`;
+  }
+  return title;
 }
 
 export function formatTable(result: AuditResult, opts: TableOptions = {}): string {
@@ -107,7 +114,7 @@ export function formatTable(result: AuditResult, opts: TableOptions = {}): strin
   lines.push(
     `Reclaimable: ${formatBytes(result.totals.reclaimable)}  (tier 0: ${formatBytes(result.totals.byTier[0])} · tier 1: ${formatBytes(result.totals.byTier[1])} · tier 2: ${formatBytes(result.totals.byTier[2])})`,
   );
-  lines.push('Nothing was deleted. Run `macsweep plan` to build a cleanup plan.');
+  lines.push('Nothing was deleted. Run `diskwise plan` to build a cleanup plan.');
 
   return `${lines.join('\n')}\n`;
 }

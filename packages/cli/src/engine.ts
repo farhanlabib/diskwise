@@ -22,8 +22,8 @@ import {
   type RunSummary,
   type Tier,
   type UndoItemResult,
-} from '@macsweep/core';
-import { sampleAudit } from '@macsweep/report';
+} from '@diskwise/core';
+import { sampleAudit } from '@diskwise/report';
 
 export interface Engine {
   audit(opts: {

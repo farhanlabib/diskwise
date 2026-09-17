@@ -44,4 +44,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: packages/native-helper/build.sh
       - run: pnpm test
-      - run: pnpm -F macsweep build
+<<<<<<< ours
+      - run: pnpm -F @farhanlabib/diskwise build
+=======
+      - run: pnpm -F @diskwise/ui build
+      - run: pnpm -F diskwise build
+      - run: pnpm exec playwright install chromium && pnpm test:e2e
+>>>>>>> theirs

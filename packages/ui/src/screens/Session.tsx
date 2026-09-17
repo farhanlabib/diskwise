@@ -17,7 +17,7 @@ export function Session({
   }, [variant]);
 
   const copy = () => {
-    void copyText('macsweep ui').then((ok) => {
+    void copyText('diskwise ui').then((ok) => {
       if (ok) {
         setCopied(true);
         window.setTimeout(() => setCopied(false), 1400);
@@ -35,7 +35,7 @@ export function Session({
           />
           <div className="mt-[16px] text-[20px] [font-weight:640]">Reconnecting…</div>
           <div className="mt-[8px] text-[13px] text-text2">
-            The progress stream dropped. MacSweep is trying to reconnect to the local server.
+            The progress stream dropped. DiskWise is trying to reconnect to the local server.
           </div>
           <button
             type="button"
@@ -55,10 +55,10 @@ export function Session({
         <div className="w-full max-w-[420px] text-center">
           <div className="text-[22px] [font-weight:640]">This link isn't valid any more.</div>
           <div className="mt-[8px] text-[13px] text-text2">
-            Open MacSweep from your terminal: run the command below.
+            Open DiskWise from your terminal: run the command below.
           </div>
           <div className="mt-[18px] flex items-center gap-[10px] rounded-[8px] border border-card-line bg-card px-[14px] py-[11px]">
-            <span className="flex-1 text-left font-mono text-[13px]">macsweep ui</span>
+            <span className="flex-1 text-left font-mono text-[13px]">diskwise ui</span>
             <button
               type="button"
               onClick={copy}
@@ -75,12 +75,12 @@ export function Session({
   return (
     <div className="flex flex-1 items-center justify-center bg-content p-[40px]">
       <div className="w-full max-w-[420px] text-center">
-        <div className="text-[22px] [font-weight:640]">MacSweep has stopped.</div>
+        <div className="text-[22px] [font-weight:640]">DiskWise has stopped.</div>
         <div className="mt-[8px] text-[13px] text-text2">
           Run the command below in your terminal to start it again.
         </div>
         <div className="mt-[18px] flex items-center gap-[10px] rounded-[8px] border border-card-line bg-card px-[14px] py-[11px]">
-          <span className="flex-1 text-left font-mono text-[13px]">macsweep ui</span>
+          <span className="flex-1 text-left font-mono text-[13px]">diskwise ui</span>
           <button
             type="button"
             onClick={copy}

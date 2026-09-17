@@ -39,7 +39,7 @@ let privateVar: string;
 let applications: string;
 
 beforeAll(async () => {
-  root = await mkdtemp(join(tmpdir(), 'macsweep-system-data-'));
+  root = await mkdtemp(join(tmpdir(), 'diskwise-system-data-'));
   home = join(root, 'home');
   library = join(root, 'library');
   privateVar = join(root, 'privatevar');

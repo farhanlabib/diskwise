@@ -305,6 +305,7 @@ export function Apps({
             <button
               key={app.id}
               type="button"
+              data-testid="app-row"
               onClick={() => onNavigate(`#/apps/${app.bundleId}`)}
               className={`grid w-full ${GRID} cursor-pointer items-center gap-[12px] border-b border-border2 px-[36px] py-[11px] text-left hover:bg-hover ${
                 index === highlight ? 'bg-sel' : ''
@@ -382,7 +383,10 @@ function SortHeader({
 function LocationGroupCard({ group }: { group: AppLocationGroup }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <div className="rounded-[10px] border border-card-line bg-card px-[18px] py-[16px]">
+    <div
+      data-testid="app-location-group"
+      className="rounded-[10px] border border-card-line bg-card px-[18px] py-[16px]"
+    >
       <div className="flex items-center gap-[10px]">
         <div className="flex-1 text-[14px] [font-weight:600]">{group.name}</div>
         <TierBadge tier={group.tier} />

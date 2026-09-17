@@ -6,7 +6,7 @@ export interface Settings {
   redact: boolean;
 }
 
-export const SETTINGS_KEY = 'macsweep.settings';
+export const SETTINGS_KEY = 'diskwise.settings';
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',

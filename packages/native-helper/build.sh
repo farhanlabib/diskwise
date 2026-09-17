@@ -14,13 +14,13 @@ fi
 
 BIN_DIR="$(swift build -c release "${ARCH_FLAGS[@]}" --show-bin-path)"
 mkdir -p bin
-cp "$BIN_DIR/macsweep-helper" bin/macsweep-helper
+cp "$BIN_DIR/diskwise-helper" bin/diskwise-helper
 
 # Ad-hoc signature: no Developer ID and no notarization are needed for a binary
 # that is shipped inside an npm package or Homebrew formula (those are not
 # quarantined by Gatekeeper). It also gives the binary a stable code identity
 # for macOS privacy (TCC) prompts.
-codesign --force -s - bin/macsweep-helper
-codesign -dv bin/macsweep-helper 2>&1
+codesign --force -s - bin/diskwise-helper
+codesign -dv bin/diskwise-helper 2>&1
 
-echo "built bin/macsweep-helper"
+echo "built bin/diskwise-helper"

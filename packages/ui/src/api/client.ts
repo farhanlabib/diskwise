@@ -1,4 +1,4 @@
-const TOKEN_KEY = 'macsweep.token';
+const TOKEN_KEY = 'diskwise.token';
 
 let token: string | null = null;
 let initialized = false;
@@ -55,11 +55,11 @@ function authHeaders(): Headers {
 }
 
 function notifyUnauthorized(): void {
-  window.dispatchEvent(new CustomEvent('macsweep:unauthorized'));
+  window.dispatchEvent(new CustomEvent('diskwise:unauthorized'));
 }
 
 function notifyDisconnected(): void {
-  window.dispatchEvent(new CustomEvent('macsweep:disconnected'));
+  window.dispatchEvent(new CustomEvent('diskwise:disconnected'));
 }
 
 async function errorMessage(response: Response): Promise<string> {

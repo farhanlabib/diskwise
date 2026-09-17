@@ -2,7 +2,7 @@
 
 exports[`formatTable > matches the snapshot 1`] = `
 "Container 494.4 GB · used 431.0 GB · free 63.4 GB
-Full Disk Access: limited — Grant Full Disk Access to iTerm2 in System Settings → Privacy & Security → Full Disk Access, then re-run macsweep audit.
+Full Disk Access: limited — Grant Full Disk Access to iTerm2 in System Settings → Privacy & Security → Full Disk Access, then re-run diskwise audit.
 
 Tier 0 · Regenerates                                                      8.4 GB
   Xcode DerivedData                                                       8.4 GB
@@ -37,6 +37,6 @@ Traps
 Unreadable: 2 paths
 
 Reclaimable: 33.9 GB  (tier 0: 8.4 GB · tier 1: 25.5 GB · tier 2: 0 B)
-Nothing was deleted. Run \`macsweep plan\` to build a cleanup plan.
+Nothing was deleted. Run \`diskwise plan\` to build a cleanup plan.
 "
 `;

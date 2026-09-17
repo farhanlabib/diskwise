@@ -64,7 +64,7 @@ export async function acquireLock(lockPath: string): Promise<() => Promise<void>
         await unlink(lockPath).catch(() => undefined);
         continue;
       }
-      throw new Error(`LOCKED: another macsweep run (pid ${pid ?? 'unknown'}) is in progress`);
+      throw new Error(`LOCKED: another diskwise run (pid ${pid ?? 'unknown'}) is in progress`);
     }
   }
 

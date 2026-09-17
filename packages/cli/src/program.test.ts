@@ -2,8 +2,8 @@ import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { parsePlan, serializePlan } from '@macsweep/core';
-import type { CleanupPlan, PlanItem, RunSummary, Tier } from '@macsweep/core';
+import { parsePlan, serializePlan } from '@diskwise/core';
+import type { CleanupPlan, PlanItem, RunSummary, Tier } from '@diskwise/core';
 import { buildProgram } from './program';
 import { promptImpl } from './prompt';
 import { sampleEngine, setEngine, type Engine } from './engine';
@@ -20,7 +20,7 @@ function harness(argv: string[], isTTY = false) {
   return {
     out,
     err,
-    run: () => program.parseAsync(['node', 'macsweep', ...argv]),
+    run: () => program.parseAsync(['node', 'diskwise', ...argv]),
   };
 }
 
@@ -95,7 +95,7 @@ function planWith(items: PlanItem[]): CleanupPlan {
 }
 
 async function tempPlanFile(plan: CleanupPlan): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'macsweep-cli-'));
+  const dir = await mkdtemp(join(tmpdir(), 'diskwise-cli-'));
   const file = join(dir, 'plan.json');
   await writeFile(file, serializePlan(plan));
   return file;
@@ -108,7 +108,7 @@ afterEach(() => {
   promptImpl.ask = realAsk;
 });
 
-describe('macsweep CLI', () => {
+describe('diskwise CLI', () => {
   it('prints the sample audit table', async () => {
     const { out, run } = harness(['audit']);
     await run();
@@ -142,7 +142,7 @@ describe('macsweep CLI', () => {
 describe('plan', () => {
   it('prints tiers and writes a parseable plan file', async () => {
     setEngine(engineWith({ buildPlan: () => planWith([baseItem]) }));
-    const dir = await mkdtemp(join(tmpdir(), 'macsweep-plan-'));
+    const dir = await mkdtemp(join(tmpdir(), 'diskwise-plan-'));
     const file = join(dir, 'plan.json');
 
     const { out, err, run } = harness(['plan', '-o', file]);
@@ -251,7 +251,7 @@ describe('clean', () => {
 
     const { err, run } = harness(['clean', '--apply']);
     await expect(run()).rejects.toMatchObject({ exitCode: 1 });
-    expect(err.join('')).toContain('Another macsweep run is in progress.');
+    expect(err.join('')).toContain('Another diskwise run is in progress.');
   });
 
   it('requires a terminal for --interactive', async () => {
@@ -365,6 +365,6 @@ describe('report', () => {
     await run();
 
     expect(called).toBe(true);
-    expect(out.join('')).toContain('# macsweep disk report');
+    expect(out.join('')).toContain('# diskwise disk report');
   });
 });

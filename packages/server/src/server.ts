@@ -3,7 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, resolve, sep } from 'node:path';
 import { z } from 'zod';
-import type { AppReport, AuditResult, CleanupPlan, PlanSelection } from '@macsweep/core/types';
+import type { AppReport, AuditResult, CleanupPlan, PlanSelection } from '@diskwise/core/types';
 import type { ServerEngine } from './engine';
 import { JobManager } from './jobs';
 import type { Job } from './jobs';

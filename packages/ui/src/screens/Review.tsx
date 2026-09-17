@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { CleanupPlan, PlanItem, Tier } from '@macsweep/core/types';
+import type { CleanupPlan, PlanItem, Tier } from '@diskwise/core/types';
 import { TierBadge } from '../components/TierBadge';
 import { TypedConfirmField } from '../components/TypedConfirmField';
 import { formatBytes } from '../lib/format';

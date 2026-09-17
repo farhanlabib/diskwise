@@ -2,13 +2,13 @@
 
 Open System Settings → General → Storage on any Mac and you will see a category called **System Data**. It is often the single biggest bar on the screen, and it is also the one Apple never explains. There is no public API that returns it, no folder named "System Data", and no way to click into it. It is a remainder: everything on the volume that the other categories did not claim.
 
-macsweep takes the same idea and makes the remainder legible. This document explains how that estimate is built, what each bucket contains, and which parts are safe to touch.
+diskwise takes the same idea and makes the remainder legible. This document explains how that estimate is built, what each bucket contains, and which parts are safe to touch.
 
-## How macsweep defines it
+## How diskwise defines it
 
 ```
 System Data total = container used − visible space
-System Data measured = sum of the buckets macsweep can walk
+System Data measured = sum of the buckets diskwise can walk
 System Data unmeasured = total − measured   (never negative)
 ```
 
@@ -17,9 +17,9 @@ System Data unmeasured = total − measured   (never negative)
 - **The buckets** are measured once each, sharing a single set of seen file identities (`dev:ino`), so hardlinks and overlapping roots are counted a single time. Parent buckets are the sum of their children plus whatever is left over, so the tree always adds up.
 - **Unmeasured** is simply what is left. It exists so the numbers are honest: `measured + unmeasured = total`, always.
 
-Everything is measured as **allocated** size (`st.blocks * 512`), the space the file system actually reserves, not the logical file length. That is why macsweep can report a 228 GB sparse file as 2.7 GB.
+Everything is measured as **allocated** size (`st.blocks * 512`), the space the file system actually reserves, not the logical file length. That is why diskwise can report a 228 GB sparse file as 2.7 GB.
 
-**Excluded from measurement:** `~/Library/CloudStorage`, `~/Library/Mobile Documents`, `/Library/CloudStorage`, plus `/System/Volumes/Data`, `/Volumes` and `/dev`. Cloud-storage folders are File Provider mounts; they report the boot volume's device id, so a walker cannot tell them apart from local data, and enumerating them can block for minutes while the provider syncs. They hold cloud data, not local System Data, so macsweep skips them rather than hanging. If you keep local files in a cloud folder, they are not counted in the buckets and land in Unmeasured.
+**Excluded from measurement:** `~/Library/CloudStorage`, `~/Library/Mobile Documents`, `/Library/CloudStorage`, plus `/System/Volumes/Data`, `/Volumes` and `/dev`. Cloud-storage folders are File Provider mounts; they report the boot volume's device id, so a walker cannot tell them apart from local data, and enumerating them can block for minutes while the provider syncs. They hold cloud data, not local System Data, so diskwise skips them rather than hanging. If you keep local files in a cloud folder, they are not counted in the buckets and land in Unmeasured.
 
 ## The buckets
 
@@ -43,7 +43,7 @@ Shared support files for macOS and installed apps. Children: `Application Suppor
 
 ### /private/var
 
-Runtime state for macOS and apps. Children: `vm` (swap files and the sleep image), `folders` (per-user temporary folders), `db` (system databases and installer receipts), `log` (system logs). This bucket is tier 3. `vm` is managed by the kernel — swap grows under memory pressure and **shrinks after a restart**; deleting swap files by hand can corrupt or crash the running system. `folders` is cleared by macOS at reboot. `db` and `log` are read-only to macsweep.
+Runtime state for macOS and apps. Children: `vm` (swap files and the sleep image), `folders` (per-user temporary folders), `db` (system databases and installer receipts), `log` (system logs). This bucket is tier 3. `vm` is managed by the kernel — swap grows under memory pressure and **shrinks after a restart**; deleting swap files by hand can corrupt or crash the running system. `folders` is cleared by macOS at reboot. `db` and `log` are read-only to diskwise.
 
 - **vm:** never touch.
 - **folders:** macOS cleans it; a reboot is the correct "fix".
@@ -60,7 +60,7 @@ Homebrew packages, downloads and build caches. The reclaimable part is downloads
 Your personal library: caches, sandboxed app containers, and support files. Children: `Caches`, `Containers`, `Group Containers`, `Application Support`, `Developer`, `Logs`, `Mail`, `Messages`.
 
 - **Caches / Logs:** rebuild; tier 0.
-- **Containers / Group Containers / Application Support:** mixed. Some hold real data (an offline library, a database). macsweep only acts on them through reviewed, per-app rules.
+- **Containers / Group Containers / Application Support:** mixed. Some hold real data (an offline library, a database). diskwise only acts on them through reviewed, per-app rules.
 - **Mail / Messages:** your actual messages and attachments. Tier 2/3 — Trash or report only, never deleted.
 
 ### Hidden home folders
@@ -69,7 +69,7 @@ Every dot-directory directly in your home other than `~/.Trash`, grouped into on
 
 ## Snapshots
 
-Local Time Machine snapshots are listed with `tmutil listlocalsnapshots /`. macsweep reports their **count and names only**: their size cannot be read without admin rights, so counting it would be a guess. They are shown with a zero-byte row, a tier 3 marker, and the command that thins them:
+Local Time Machine snapshots are listed with `tmutil listlocalsnapshots /`. diskwise reports their **count and names only**: their size cannot be read without admin rights, so counting it would be a guess. They are shown with a zero-byte row, a tier 3 marker, and the command that thins them:
 
 ```
 $ tmutil thinlocalsnapshots / 10000000000 4
@@ -79,13 +79,13 @@ This asks macOS to reclaim up to 10 GB of local snapshots, keeping the four most
 
 ## Why Unmeasured exists
 
-`/private/var/db` internals, `~/Library/Mail` for a non-authorized account, other users' home directories, APFS metadata and purgeable space are all protected by the system or by SIP. macsweep would have to report a number it cannot verify, so it does not. Instead it puts the difference in a single **Unmeasured** row and says so. `measured + unmeasured` equals the total by construction. The honest gap is more useful than a confident wrong number.
+`/private/var/db` internals, `~/Library/Mail` for a non-authorized account, other users' home directories, APFS metadata and purgeable space are all protected by the system or by SIP. diskwise would have to report a number it cannot verify, so it does not. Instead it puts the difference in a single **Unmeasured** row and says so. `measured + unmeasured` equals the total by construction. The honest gap is more useful than a confident wrong number.
 
 If Unmeasured is large, grant Full Disk Access in System Settings → Privacy & Security → Full Disk Access and re-run; some of that gap will move into the measured buckets. The rest is genuinely macOS's.
 
-## Reading `macsweep audit --explain`
+## Reading `diskwise audit --explain`
 
-`macsweep audit --explain` is the teaching view of the decomposition — the same data as this document, for the Mac in front of you:
+`diskwise audit --explain` is the teaching view of the decomposition — the same data as this document, for the Mac in front of you:
 
 ```
 What macOS calls "System Data": 49.0 GB
@@ -98,7 +98,7 @@ CoreSimulator              ████████        16.2 GB
 ...
 
 Unmeasured                   ████████████  24.1 GB
-    macOS protects these areas; macsweep reports the gap instead of guessing.
+    macOS protects these areas; diskwise reports the gap instead of guessing.
 
 Measured 24.9 GB of 49.0 GB
 ```
@@ -107,7 +107,7 @@ Measured 24.9 GB of 49.0 GB
 - The size on the right is allocated bytes on disk, formatted the way Finder counts (decimal units).
 - Each bucket's explanation sits on the line below its row.
 - Children are indented with `└`; they are already included in the parent's size, they do not add to it.
-- A `$ command` line is a manual step: macsweep never runs `sudo` and never automates root work.
-- The last row is **Unmeasured**; the footer states how much of the total macsweep actually measured.
+- A `$ command` line is a manual step: diskwise never runs `sudo` and never automates root work.
+- The last row is **Unmeasured**; the footer states how much of the total diskwise actually measured.
 
-The buckets plus Unmeasured always equal the total. If you want the machine-readable version, `macsweep audit --json` includes the same report under `systemData`.
+The buckets plus Unmeasured always equal the total. If you want the machine-readable version, `diskwise audit --json` includes the same report under `systemData`.

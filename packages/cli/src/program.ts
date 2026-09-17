@@ -10,8 +10,8 @@ import {
   type PlanItem,
   type PlanSelection,
   type Tier,
-} from '@macsweep/core';
-import { formatExplain, formatJson, formatMarkdown, formatTable, formatBytes } from '@macsweep/report';
+} from '@diskwise/core';
+import { formatExplain, formatJson, formatMarkdown, formatTable, formatBytes } from '@diskwise/report';
 import { registerAppsCommand } from './commands/apps';
 import { registerDoctorCommand } from './commands/doctor';
 import { registerUiCommand } from './commands/ui';
@@ -53,7 +53,7 @@ export function buildProgram(io: IO): Command {
   const program = new Command();
 
   program
-    .name('macsweep')
+    .name('diskwise')
     .description("Explains where your Mac's disk space went and only deletes what is provably safe.")
     .version(VERSION);
 
@@ -186,7 +186,7 @@ export function buildProgram(io: IO): Command {
     .option('--tier <list>', 'tiers to include (comma list of 0, 1, 2)')
     .option('--category <name>', `limit to one category: ${CATEGORIES.join(', ')}`)
     .option('--rule <ids...>', 'limit to specific rule ids')
-    .option('--plan <file>', 'use a plan saved by `macsweep plan`')
+    .option('--plan <file>', 'use a plan saved by `diskwise plan`')
     .option('--apply', 'actually delete; the default is a dry run')
     .option('--interactive', 'choose items one at a time')
     .option(
@@ -247,7 +247,7 @@ export function buildProgram(io: IO): Command {
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           if (message.startsWith('LOCKED')) {
-            program.error('Another macsweep run is in progress.', { exitCode: 1 });
+            program.error('Another diskwise run is in progress.', { exitCode: 1 });
           }
           throw err;
         } finally {

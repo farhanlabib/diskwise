@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { SystemDataReport } from '@macsweep/core';
+import type { SystemDataReport } from '@diskwise/core';
 import { formatExplain } from './explain';
 
 const GB = 1_000_000_000;

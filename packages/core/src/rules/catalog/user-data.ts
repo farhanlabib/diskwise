@@ -86,7 +86,7 @@ export const userDataRules: Rule[] = [
     action: 'empty-trash',
     permanentOnly: true,
     rationale:
-      'Emptying the Trash permanently deletes everything already in it and undo becomes impossible, so this is the one macsweep action that cannot be taken back.',
+      'Emptying the Trash permanently deletes everything already in it and undo becomes impossible, so this is the one diskwise action that cannot be taken back.',
     regeneration: 'Nothing: emptied items are gone for good.',
   },
 ];

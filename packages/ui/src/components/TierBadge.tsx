@@ -1,4 +1,4 @@
-import type { Tier } from '@macsweep/core/types';
+import type { Tier } from '@diskwise/core/types';
 
 export const TIER_LABEL: Record<Tier, string> = {
   0: 'Regenerates',

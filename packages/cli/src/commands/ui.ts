@@ -3,8 +3,8 @@ import { access } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
-import { startServer } from '@macsweep/server';
-import type { ServerHandle } from '@macsweep/server';
+import { startServer } from '@diskwise/server';
+import type { ServerHandle } from '@diskwise/server';
 import { createServerEngine } from '../server-engine';
 import type { IO } from '../program';
 
@@ -67,7 +67,7 @@ export function registerUiCommand(
 
       const assetsDir = await resolveAssetsDir();
       if (!assetsDir) {
-        program.error('The web UI is not built. Run: pnpm -F @macsweep/ui build', { exitCode: 1 });
+        program.error('The web UI is not built. Run: pnpm -F @diskwise/ui build', { exitCode: 1 });
       }
 
       let resolveClosed: () => void = () => {};
@@ -83,7 +83,7 @@ export function registerUiCommand(
       });
 
       const base = handle.url.split('#')[0] ?? handle.url;
-      io.stdout(`MacSweep is running at ${base}\n`);
+      io.stdout(`DiskWise is running at ${base}\n`);
       io.stdout('Press Ctrl-C to stop.\n');
 
       const onSigint = (): void => {

@@ -1,5 +1,5 @@
 export function Toolbar({
-  title = 'MacSweep',
+  title = 'DiskWise',
   themeLabel,
   onToggleTheme,
   onStopServer,

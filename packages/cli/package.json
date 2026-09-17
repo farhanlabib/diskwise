@@ -1,17 +1,17 @@
 {
-  "name": "macsweep",
+  "name": "@farhanlabib/diskwise",
   "version": "0.1.0",
   "description": "Explains where your Mac's disk space went and only deletes what is provably safe.",
   "license": "MIT",
   "author": "Farhan Labib",
-  "homepage": "https://github.com/farhanlabib/macsweep#readme",
+  "homepage": "https://github.com/farhanlabib/diskwise#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/farhanlabib/macsweep.git",
+    "url": "git+https://github.com/farhanlabib/diskwise.git",
     "directory": "packages/cli"
   },
   "bugs": {
-    "url": "https://github.com/farhanlabib/macsweep/issues"
+    "url": "https://github.com/farhanlabib/diskwise/issues"
   },
   "keywords": [
     "macos",
@@ -23,7 +23,7 @@
   ],
   "type": "module",
   "bin": {
-    "macsweep": "./dist/index.js"
+    "diskwise": "./dist/index.js"
   },
   "files": [
     "dist",
@@ -50,8 +50,8 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "@macsweep/core": "workspace:*",
-    "@macsweep/report": "workspace:*",
-    "@macsweep/server": "workspace:*"
+    "@diskwise/core": "workspace:*",
+    "@diskwise/report": "workspace:*",
+    "@diskwise/server": "workspace:*"
   }
 }

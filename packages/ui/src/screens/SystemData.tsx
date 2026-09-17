@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { SystemDataBucket, SystemDataReport, Tier } from '@macsweep/core/types';
+import type { SystemDataBucket, SystemDataReport, Tier } from '@diskwise/core/types';
 import { CopyCommandCard } from '../components/CopyCommandCard';
 import { DetailPanel } from '../components/DetailPanel';
 import { EmptyState } from '../components/EmptyState';
@@ -14,7 +14,7 @@ const BAR_REFERENCE = 39.1 * 1_000_000_000;
 const UNMEASURED_ID = '__unmeasured';
 const UNMEASURED_TITLE = 'Unmeasured (protected / needs root)';
 const UNMEASURED_EXPLANATION =
-  'Areas MacSweep couldn’t read: SIP-protected paths and folders that need root. Shown as a hatched bucket so the total always adds up honestly.';
+  'Areas DiskWise couldn’t read: SIP-protected paths and folders that need root. Shown as a hatched bucket so the total always adds up honestly.';
 
 export function SystemData({
   onNavigate,

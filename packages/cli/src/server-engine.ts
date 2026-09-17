@@ -19,8 +19,8 @@ import {
   native,
   openJournal,
   undoRun,
-} from '@macsweep/core';
-import type { ServerEngine } from '@macsweep/server';
+} from '@diskwise/core';
+import type { ServerEngine } from '@diskwise/server';
 import { VERSION } from './version';
 
 export function createServerEngine(opts: { home?: string } = {}): ServerEngine {
@@ -97,7 +97,7 @@ export function createServerEngine(opts: { home?: string } = {}): ServerEngine {
       if (!appPath) return undefined;
       const helper = await native.findHelper();
       if (!helper) return undefined;
-      const out = join(tmpdir(), `macsweep-icon-${randomUUID()}.png`);
+      const out = join(tmpdir(), `diskwise-icon-${randomUUID()}.png`);
       try {
         await new Promise<void>((resolveIcon, rejectIcon) => {
           execFile(helper, ['icon', appPath, out, '--size', '64'], (error, _stdout, stderr) => {

@@ -9,7 +9,7 @@ import type {
   RunSummary,
   Tier,
   Trap,
-} from '@macsweep/core/types';
+} from '@diskwise/core/types';
 import type {
   AppEntry,
   AppLocationAction,

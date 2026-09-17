@@ -1,12 +1,12 @@
-# The macsweep safety model
+# The diskwise safety model
 
-macsweep deletes files, so its safety guarantees are the product. This document maps every rule from the plan to **what it means**, **why it exists**, **where it is enforced**, and **which test proves it**. Paths and test names are the planned locations; as the implementation lands, this document is the contract it must satisfy.
+diskwise deletes files, so its safety guarantees are the product. This document maps every rule from the plan to **what it means**, **why it exists**, **where it is enforced**, and **which test proves it**. Paths and test names are the planned locations; as the implementation lands, this document is the contract it must satisfy.
 
 A failure in any rule below blocks a release. Reports of a bypassed rule are security bugs — see [SECURITY.md](../SECURITY.md).
 
 ## 1. Dry-run is the default
 
-- **What.** `macsweep clean` prints a plan and exits. Nothing is deleted without `--apply`.
+- **What.** `diskwise clean` prints a plan and exits. Nothing is deleted without `--apply`.
 - **Why.** The most common failure mode of a cleanup tool is doing too much, too fast, before the user has read the plan.
 - **Enforced in.** `packages/core/src/execute/` (the executor refuses to run without an explicit apply flag) and `packages/cli/` (the command defaults to plan-only).
 - **Tested by.** `packages/core/src/execute/dry-run.test.ts` — the dry-run purity test snapshots mtimes and a tree hash, runs every action without `--apply`, and asserts zero mutation.
@@ -48,28 +48,28 @@ A failure in any rule below blocks a release. Reports of a bypassed rule are sec
 
 ## 7. Root work is never automated
 
-- **What.** `needsRoot` rules emit the exact command for the user to run themselves. macsweep never shells out to `sudo` and never shows a password prompt.
+- **What.** `needsRoot` rules emit the exact command for the user to run themselves. diskwise never shells out to `sudo` and never shows a password prompt.
 - **Why.** A tool that asks for your password to delete system paths is a tool you cannot audit. The user stays in control of privileged actions.
 - **Enforced in.** `packages/core/src/rules/lint.ts` (a `needsRoot` rule must carry a `manualCommand` and an action that does not run) and `packages/core/src/execute/` (root actions are rendered, not run).
 - **Tested by.** `packages/core/src/execute/root.test.ts` — a `needsRoot` finding produces a command string and performs no filesystem operation.
 
 ## 8. Preflight state checks come from rule data
 
-- **What.** Rules declare `preflight` (`processes`, `daemons`, `bootedSimulators`). macsweep refuses to touch an app's caches while it runs, Docker data while the daemon runs, or a runtime while a simulator is booted.
+- **What.** Rules declare `preflight` (`processes`, `daemons`, `bootedSimulators`). diskwise refuses to touch an app's caches while it runs, Docker data while the daemon runs, or a runtime while a simulator is booted.
 - **Why.** Deleting files out from under a running process corrupts data. The checks are data, so they are reviewable and testable.
 - **Enforced in.** `packages/core/src/execute/` (preflight runs before every action).
 - **Tested by.** `packages/core/src/execute/preflight.test.ts` — a running app blocks its cache clean and reports the reason; quitting gracefully unblocks it.
 
 ## 9. Write-ahead journal and single-run lock
 
-- **What.** Every action writes an **intent** record before it runs and a **result** record after it, as JSONL at `~/.macsweep/journal/<timestamp>.jsonl`. A lockfile at `~/.macsweep/lock` prevents concurrent runs (CLI and GUI).
+- **What.** Every action writes an **intent** record before it runs and a **result** record after it, as JSONL at `~/.diskwise/journal/<timestamp>.jsonl`. A lockfile at `~/.diskwise/lock` prevents concurrent runs (CLI and GUI).
 - **Why.** If a run crashes after deleting but before recording, history is silently lost. The intent-first write makes every run auditable and every gap explainable.
 - **Enforced in.** `packages/core/src/journal.ts`, used by `packages/core/src/execute/`.
 - **Tested by.** `packages/core/src/journal.test.ts` — killing a run mid-action leaves an intent record with no result, and the lock recovers.
 
 ## 10. Undo
 
-- **What.** `macsweep undo --last` restores Trash moves from the URLs recorded when the native helper trashed them, and states exactly what it cannot restore and why ("Trash was emptied", "rebuilds automatically").
+- **What.** `diskwise undo --last` restores Trash moves from the URLs recorded when the native helper trashed them, and states exactly what it cannot restore and why ("Trash was emptied", "rebuilds automatically").
 - **Why.** Recoverability is what makes Tier 2 safe to offer, and honest reporting is what makes the tool trustworthy when recovery is impossible.
 - **Enforced in.** `packages/core/src/journal.ts` (recorded trashed URLs) and `packages/core/src/execute/` (the undo path).
 - **Tested by.** `packages/core/src/undo.test.ts` — a synthetic Tier 2 rule round-trips, and an emptied Trash is reported as unrestorable.
@@ -83,7 +83,7 @@ A failure in any rule below blocks a release. Reports of a bypassed rule are sec
 
 ## 12. The local UI server is not an attack surface
 
-- **What.** The `macsweep ui` server binds `127.0.0.1` only, requires a per-session secret token, validates `Host` and `Origin`, sends no CORS headers, and shuts down with the CLI process.
+- **What.** The `diskwise ui` server binds `127.0.0.1` only, requires a per-session secret token, validates `Host` and `Origin`, sends no CORS headers, and shuts down with the CLI process.
 - **Why.** A local server that answers any local request is reachable by any web page you have open. Every request must be proven to come from the UI we launched.
 - **Enforced in.** `packages/server/` (binding, router, token and header checks, job manager).
 - **Tested by.** `packages/server/test/security.test.ts` — the server security suite below.

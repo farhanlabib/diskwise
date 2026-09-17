@@ -2,7 +2,7 @@
 
 A **redacted** audit of the reference Mac, used by PLAN.md §12 to verify that measurements stay correct between milestones. The reference numbers themselves (the ~78 GB "System Data", the 16 GB unused simulator runtime, `Docker.raw`'s 228 GB apparent / 2.7 GB allocated split) are not hardcoded anywhere; this file is the record they are compared against.
 
-- `audit.redacted.json` — the output of `macsweep report --json --redact`, so usernames, hostnames, volume names, and home paths are already rewritten or stripped. It is safe to commit.
+- `audit.redacted.json` — the output of `diskwise report --json --redact`, so usernames, hostnames, volume names, and home paths are already rewritten or stripped. It is safe to commit.
 
 ## Re-recording
 
@@ -11,8 +11,8 @@ Build the CLI, then run the recorder. It only reads the disk; it never writes ou
 ```sh
 pnpm install
 packages/native-helper/build.sh
-pnpm -F @macsweep/ui build
-pnpm -F macsweep build
+pnpm -F @diskwise/ui build
+pnpm -F @farhanlabib/diskwise build
 node scripts/record-baseline.mjs
 ```
 

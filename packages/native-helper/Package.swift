@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "macsweep-helper",
+    name: "diskwise-helper",
     platforms: [.macOS(.v14)],
     targets: [
         .executableTarget(
-            name: "macsweep-helper",
-            path: "Sources/macsweep-helper"
+            name: "diskwise-helper",
+            path: "Sources/diskwise-helper"
         )
     ]
 )

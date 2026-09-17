@@ -1,3 +1,4 @@
+import type { AuditResult } from '@diskwise/core';
 import { describe, expect, it } from 'vitest';
 import { formatBytes } from './format-bytes';
 import { formatTable } from './table';
@@ -55,5 +56,35 @@ describe('formatTable', () => {
     const plain = formatTable(sampleAudit, { color: false });
     expect(plain).not.toContain('\x1b[');
     expect(formatTable(sampleAudit, { color: true })).toContain('\x1b[');
+  });
+
+  function auditWithReclaimable(reclaimable?: number): AuditResult {
+    const finding = {
+      ...sampleAudit.findings[0]!,
+      totals: {
+        allocated: 8e9,
+        apparent: 8e9,
+        ...(reclaimable !== undefined ? { reclaimable } : {}),
+      },
+    };
+    return {
+      ...sampleAudit,
+      findings: [finding],
+      totals: { byTier: { 0: 8e9, 1: 0, 2: 0, 3: 0 }, reclaimable: reclaimable ?? 8e9 },
+    };
+  }
+
+  it('notes clone-shared bytes on a row whose reclaimable is well below allocated', () => {
+    const out = formatTable(auditWithReclaimable(1e9), { color: false });
+    expect(out).toContain('(frees ~1.0 GB; rest shared with clones)');
+    expect(out).toContain('Reclaimable: 1.0 GB');
+  });
+
+  it('omits the clone note when reclaimable is undefined or near allocated', () => {
+    for (const value of [undefined, 8e9, 7.9e9]) {
+      expect(formatTable(auditWithReclaimable(value), { color: false })).not.toContain(
+        'rest shared with clones',
+      );
+    }
   });
 });
