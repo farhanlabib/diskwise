@@ -46,14 +46,14 @@ Tier 3 is a feature, not a gap: it is how diskwise explains swap, `/private/var/
 
 ```sh
 # Try it without installing anything:
-npx @farhanlabib/diskwise audit          # no install
-npm i -g @farhanlabib/diskwise          # then just: diskwise audit
+npx diskwise audit          # no install
+npm i -g diskwise          # then just: diskwise audit
 
 # Build from source (Node 20+ and Xcode Command Line Tools):
 pnpm install
 packages/native-helper/build.sh
 pnpm -F @diskwise/ui build
-pnpm -F @farhanlabib/diskwise build
+pnpm -F diskwise build
 node packages/cli/dist/index.js audit
 
 # Homebrew tap (coming with v0.1.0):

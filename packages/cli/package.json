@@ -1,5 +1,5 @@
 {
-  "name": "@farhanlabib/diskwise",
+  "name": "diskwise",
   "version": "0.1.0",
   "description": "Explains where your Mac's disk space went and only deletes what is provably safe.",
   "license": "MIT",

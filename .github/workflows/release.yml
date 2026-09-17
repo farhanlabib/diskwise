@@ -33,7 +33,7 @@ jobs:
       - run: pnpm test
       - run: packages/native-helper/build.sh
       - run: pnpm -F @diskwise/ui build
-      - run: pnpm -F @farhanlabib/diskwise build
+      - run: pnpm -F diskwise build
       - name: Verify the helper is ad-hoc signed
         run: codesign -dv packages/cli/dist/diskwise-helper 2>&1 | grep -q 'Signature=adhoc'
       - name: Checksum the native helper

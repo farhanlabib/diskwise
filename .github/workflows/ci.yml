@@ -45,7 +45,7 @@ jobs:
       - run: packages/native-helper/build.sh
       - run: pnpm test
 <<<<<<< ours
-      - run: pnpm -F @farhanlabib/diskwise build
+      - run: pnpm -F diskwise build
 =======
       - run: pnpm -F @diskwise/ui build
       - run: pnpm -F diskwise build

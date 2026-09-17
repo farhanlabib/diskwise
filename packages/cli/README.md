@@ -7,7 +7,7 @@ macOS reports a vague "System Data" bucket that swallows tens of gigabytes with 
 diskwise's product is the reasoning, not the deletion. `clean` is a dry run unless you pass `--apply`.
 
 ```sh
-npx @farhanlabib/diskwise audit   # or: npm i -g @farhanlabib/diskwise && diskwise audit
+npx diskwise audit   # or: npm i -g diskwise && diskwise audit
 ```
 
 Requires macOS 14 Sonoma or later, on Apple Silicon or Intel, with Node.js 20+.

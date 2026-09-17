@@ -12,7 +12,7 @@ Build the CLI, then run the recorder. It only reads the disk; it never writes ou
 pnpm install
 packages/native-helper/build.sh
 pnpm -F @diskwise/ui build
-pnpm -F @farhanlabib/diskwise build
+pnpm -F diskwise build
 node scripts/record-baseline.mjs
 ```
 
