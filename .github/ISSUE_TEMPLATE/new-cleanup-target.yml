@@ -1,0 +1,54 @@
+name: New cleanup target
+description: Propose a new cleanup rule for a location macsweep does not cover yet.
+title: '[NEW TARGET] '
+labels: ['new-target']
+body:
+  - type: input
+    id: path
+    attributes:
+      label: Path
+      description: The location to clean. Use `~/` for your home folder.
+      placeholder: ~/Library/Developer/Xcode/DerivedData
+    validations:
+      required: true
+  - type: textarea
+    id: created-by
+    attributes:
+      label: What creates it?
+      description: Which tool or app writes here, and when.
+    validations:
+      required: true
+  - type: textarea
+    id: why-safe
+    attributes:
+      label: Why is it safe to delete?
+      description: Why there is no user data here, and why deleting it cannot break anything.
+    validations:
+      required: true
+  - type: textarea
+    id: regenerates
+    attributes:
+      label: How does it regenerate?
+      description: Does it come back locally, or does restoring it need the network or a long rebuild?
+    validations:
+      required: true
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Suggested tier
+      description: Tier 0 regenerates locally, 1 needs network or a long rebuild, 2 holds user data, 3 is explain-only.
+      options:
+        - '0 — REGENERATES'
+        - '1 — REDOWNLOAD'
+        - '2 — USER_DATA'
+        - '3 — NEVER'
+    validations:
+      required: true
+  - type: input
+    id: sample-size
+    attributes:
+      label: Sample size
+      description: Roughly how much space this reclaims on your Mac.
+      placeholder: 12 GB
+    validations:
+      required: true

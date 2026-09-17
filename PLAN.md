@@ -311,6 +311,25 @@ The CLI works without the helper (it degrades to allocated sizes, `~/.Trash` mov
 
 `/Library` (with Developer/CoreSimulator split into runtimes, images, devices, and caches) · `/private/var` (vm, folders, db, log) · `/opt/homebrew` or `/usr/local` · hidden `~/Library` (Caches, Containers, Application Support, Group Containers, Developer) · local snapshots (count only) · **Unmeasured** = total − everything measured (protected, needs root, snapshots). The buckets **plus Unmeasured always equal the total**.
 
+### 4.9 Old macOS leftovers (category `os-leftovers`)
+
+macOS upgrades and older toolchains leave files behind in `/Library`, `~/Library`, and the root of the disk. They're grouped in their own category and screen section, "Left over from previous macOS versions":
+
+| Rule | Location | Tier | Notes |
+|---|---|---|---|
+| `os.installer-apps` | `/Applications/Install macOS *.app` | 1 | 12–15 GB each, re-downloadable from Apple. `trash-path` |
+| `os.install-data` | `/macOS Install Data`, `/Library/Updates` (when not SIP-protected) | 1 | Staging from finished or failed upgrades. **needsRoot** → copy-paste command, and only when no update is pending (`softwareupdate --list` has nothing staged) |
+| `os.relocated-items` | `/Users/Shared/Relocated Items` | 2 | Files macOS moved aside during an upgrade. Real data, so Trash only |
+| `os.previous-system-info` | `/Previous System*`, `/Library/Preferences/SystemConfiguration/*.pre-update` | 3 | Explained, never touched |
+| `os.aerial-wallpapers` | `/Library/Application Support/com.apple.idleassetsd/Customer` | 3 | Can be several GB. Explains how to remove videos in System Settings → Wallpaper, with `manualCommand` guidance only |
+| `os.old-command-line-tools-sdks` | `/Library/Developer/CommandLineTools/SDKs/MacOSX1[0-4]*.sdk` (not the current one or its symlink target) | 1 | needsRoot, copy-paste |
+| `os.old-device-support` | `~/Library/Developer/Xcode/{iOS,watchOS,tvOS} DeviceSupport/<version>` older than the newest two per platform | 1 | Rebuilt when that device connects |
+| `os.old-simulator-caches` | `~/Library/Developer/CoreSimulator/Caches/dyld/<build>` for builds with no installed runtime | 0 | Rebuilt on demand |
+| `os.orphaned-receipts` | `/private/var/db/receipts` entries for removed packages | 3 | Report only (tiny, but explains `pkgutil --forget`) |
+| `os.stale-var-folders` | `/private/var/folders` totals | 3 | Explained only. macOS cleans it at reboot |
+
+Leftovers from uninstalled **apps** (as opposed to the OS) are `app.orphaned-data` (§4.6).
+
 ---
 
 ## 5. Safety model (the actual product)
@@ -338,14 +357,14 @@ These are enforced in code and tested adversarially. `docs/safety-model.md` maps
 macsweep audit                         # full report, decomposed, with tiers
 macsweep audit --json                  # machine-readable, versioned schema
 macsweep audit --explain               # teaching mode: what "System Data" really is
-macsweep audit --category dev|system|browser|app|user-data
+macsweep audit --category dev|system|browser|app|user-data|os-leftovers
 macsweep doctor                        # xcode/docker/brew/node/... versions, Full Disk Access status
 macsweep apps                          # installed apps sorted by reclaimable cache
 macsweep apps show <name|bundleId>     # one app: caches, logs, data, sign-in data, running state
 macsweep apps --orphans                # data left behind by uninstalled apps
 macsweep plan --tier 0,1 [-o plan.json]
 macsweep clean --tier 0 --apply
-macsweep clean --app slack --apply     # clean one app's caches (Tier 0/1 of that app)
+macsweep apps clean slack --apply      # clean one app's caches, logs and saved state (never app data)
 macsweep clean --plan plan.json --apply
 macsweep clean --interactive           # per-item prompts
 macsweep undo --last
@@ -414,6 +433,9 @@ Grounded in the real audit, so v1 is useful from day one.
 **Tier 2: user data (Trash by default)**
 `browser.chrome-profiles` · `messaging.whatsapp-media` · `mail.attachments` · `ios.backups` · `downloads.triage` *(age/size filters)* · `simulator.devices` *(permanentOnly)* · `app.orphaned-data` · `trash.empty` *(special: `empty-trash`, always permanent, excluded from bulk)* · `dev.node-modules-unlocked` *(no lockfile: report only)*
 
+**Old macOS leftovers (§4.9)**
+`os.installer-apps` (T1) · `os.install-data` (T1, needsRoot) · `os.old-command-line-tools-sdks` (T1, needsRoot) · `os.old-device-support` (T1) · `os.old-simulator-caches` (T0) · `os.relocated-items` (T2) · `os.previous-system-info` · `os.aerial-wallpapers` · `os.orphaned-receipts` · `os.stale-var-folders` (T3)
+
 **Tier 3: never (report only)**
 `system.swap` · `system.var-db` · `system.var-folders` · `keychain` · `messages` · `apfs.snapshots` *(manualCommand: thin snapshots)* · `docker.volumes` *(databases live here)* · `app.data` · `app.sign-in-data` · `app.preferences`
 
@@ -427,7 +449,7 @@ Plus a non-rule **trap detector** that flags files whose apparent size far excee
 
 **v0.2: executor + trust.** Path safety (canonical compare, identity check), preflight, executors, write-ahead journal and lock, native helper `trash`, `trash-path` + `undo` (exercised by a synthetic test rule), Tier 0/1 package-manager and Xcode rules, dyld as copy-paste. `clean --apply` ships.
 
-**v0.3: the differentiators.** Native helper (`privatesize`, `capacity`, `running-apps`, `quit-app`, walker benchmark), Docker rules (split), simulator runtimes and devices, System Data decomposition with Unmeasured, snapshots, `audit --explain`, `doctor`, redacted markdown reports, **app inventory + generic app caches + first 10 app profiles, `macsweep apps` and `clean --app`.**
+**v0.3: the differentiators.** Native helper (`privatesize`, `capacity`, `running-apps`, `quit-app`, walker benchmark), Docker rules (split), simulator runtimes and devices, System Data decomposition with Unmeasured, snapshots, `audit --explain`, `doctor`, redacted markdown reports, **app inventory + generic app caches + first 10 app profiles, `macsweep apps` and `apps clean`.**
 
 **v0.4: local web UI v1 (`macsweep ui`).** Loopback server with the §7.1 security suite, onboarding, scanning, overview, explainer, **Apps**, cleanup, review, running and result. Audit plus Tier 0/1 only.
 
@@ -474,9 +496,9 @@ How to confirm the implementation is correct at each milestone:
 2. `node packages/cli/dist/index.js audit --json` on the reference Mac matches `fixtures/baseline/` within ±10%, or the difference is explained by a journal entry. Specifically: simulator runtimes are listed individually without double-counting mounted volumes, 55-ish `node_modules` dirs are found, and `Docker.raw` is reported as ~2.7 GB allocated with its 228 GB apparent size called out as a trap.
 3. `audit --explain`: the named System Data sub-buckets **plus Unmeasured** equal the container's used total.
 4. `macsweep apps` lists every app in `/Applications`, with cache sizes that match a manual `du` of the resolved cache folders. `apps show slack` separates caches from sign-in data and app data.
-5. **Dry-run purity:** `clean --tier 0` and `clean --app slack` (no `--apply`) leave `diskutil` numbers and fixture hashes unchanged.
+5. **Dry-run purity:** `clean --tier 0` and `apps clean slack` (no `--apply`) leave `diskutil` numbers and fixture hashes unchanged.
 6. **Safety suite:** every adversarial test fails closed, and the safety lint rejects a deliberately dangerous test rule and a dangerous test app profile.
-7. **End-to-end on the reference Mac:** `clean --tier 0 --apply` frees a measurably positive number of bytes. `clean --app <running app>` refuses until the app quits. `undo --last` restores anything moved to Trash. `macsweep ui` shows the same numbers as `audit --json` and `apps --json`.
+7. **End-to-end on the reference Mac:** `clean --tier 0 --apply` frees a measurably positive number of bytes. `apps clean <running app>` refuses until the app quits. `undo --last` restores anything moved to Trash. `macsweep ui` shows the same numbers as `audit --json` and `apps --json`.
 8. **Clean-machine install without an Apple account:** on a fresh macOS user, `npx macsweep audit` and `brew install <owner>/tap/macsweep && macsweep ui` both work with no Gatekeeper prompt, and the helper reports `codesign -dv` as ad-hoc.
 
 ---

@@ -1,0 +1,80 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+@theme {
+  --color-win: var(--win);
+  --color-content: var(--content);
+  --color-sidebar: var(--sidebar);
+  --color-toolbar: var(--toolbar);
+
+  --color-text: var(--text);
+  --color-text2: var(--text2);
+  --color-text3: var(--text3);
+
+  --color-border: var(--border);
+  --color-border2: var(--border2);
+
+  --color-card: var(--card);
+  --color-card-line: var(--card-line);
+  --color-hover: var(--hover);
+  --color-active: var(--active);
+  --color-sel: var(--sel);
+  --color-sel-line: var(--sel-line);
+
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+
+  --color-t0-soft: var(--t0-soft);
+  --color-t0-fg: var(--t0-fg);
+  --color-t0-line: var(--t0-line);
+  --color-t0-dot: var(--t0-dot);
+
+  --color-t1-soft: var(--t1-soft);
+  --color-t1-fg: var(--t1-fg);
+  --color-t1-line: var(--t1-line);
+  --color-t1-dot: var(--t1-dot);
+
+  --color-t2-soft: var(--t2-soft);
+  --color-t2-fg: var(--t2-fg);
+  --color-t2-line: var(--t2-line);
+  --color-t2-dot: var(--t2-dot);
+
+  --color-t3-soft: var(--t3-soft);
+  --color-t3-fg: var(--t3-fg);
+  --color-t3-line: var(--t3-line);
+  --color-t3-dot: var(--t3-dot);
+
+  --color-root-soft: var(--root-soft);
+  --color-root-fg: var(--root-fg);
+  --color-root-line: var(--root-line);
+
+  --color-seg-apps: var(--seg-apps);
+  --color-seg-dev: var(--seg-dev);
+  --color-seg-cache: var(--seg-cache);
+  --color-seg-data: var(--seg-data);
+  --color-seg-sys: var(--seg-sys);
+  --color-seg-purge: var(--seg-purge);
+  --color-seg-free: var(--seg-free);
+
+  --shadow-window: var(--shadow);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  background: #d9d9dc;
+  color: var(--text);
+}
+
+* {
+  box-sizing: border-box;
+}

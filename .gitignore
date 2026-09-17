@@ -6,3 +6,7 @@ coverage/
 packages/native-helper/.build/
 packages/native-helper/bin/
 .vite/
+
+# Recordings from a real Mac: they contain personal paths and project names.
+fixtures/baseline/audit.redacted.json
+fixtures/probes/*.local.json

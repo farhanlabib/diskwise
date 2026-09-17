@@ -1,0 +1,47 @@
+name: New app profile
+description: Propose a reviewed per-app profile for cache cleaning.
+title: '[APP PROFILE] '
+labels: ['app-profiles']
+body:
+  - type: input
+    id: app-name
+    attributes:
+      label: App name
+      placeholder: Slack
+    validations:
+      required: true
+  - type: input
+    id: bundle-id
+    attributes:
+      label: Bundle id
+      description: From `Contents/Info.plist` (`CFBundleIdentifier`), or `macsweep apps show <name>`.
+      placeholder: com.tinyspeck.slackmacgap
+    validations:
+      required: true
+  - type: textarea
+    id: cache-folders
+    attributes:
+      label: Cache folders
+      description: Exact cache subpaths, each with why it is a cache and what it costs to get back.
+      placeholder: |
+        ~/Library/Caches/com.tinyspeck.slackmacgap — regenerates on launch
+    validations:
+      required: true
+  - type: textarea
+    id: protected-folders
+    attributes:
+      label: Sign-in and data folders to protect
+      description: Locations that hold user data, sign-in state, or local storage and must stay report-only.
+      placeholder: |
+        ~/Library/HTTPStorages/com.tinyspeck.slackmacgap
+    validations:
+      required: true
+  - type: dropdown
+    id: must-quit
+    attributes:
+      label: Must the app be quit before cleaning?
+      options:
+        - 'Yes'
+        - 'No'
+    validations:
+      required: true

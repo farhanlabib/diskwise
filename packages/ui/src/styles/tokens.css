@@ -1,0 +1,37 @@
+:root {
+  --win: #ffffff; --content: #ffffff; --sidebar: #e9e9ec; --toolbar: #f4f4f6;
+  --text: #1d1d1f; --text2: #6a6a6f; --text3: #96969b;
+  --border: rgba(0,0,0,0.09); --border2: rgba(0,0,0,0.06);
+  --card: #f6f6f8; --card-line: rgba(0,0,0,0.07); --hover: rgba(0,0,0,0.045);
+  --active: rgba(0,0,0,0.08); --sel: rgba(10,120,220,0.12); --sel-line: rgba(10,120,220,0.5);
+  --accent: #0a6fd6; --accent-fg:#ffffff;
+  --t0-soft: rgba(21,138,102,0.13); --t0-fg:#0e7150; --t0-line: rgba(21,138,102,0.28); --t0-dot:#158a66;
+  --t1-soft: rgba(42,110,184,0.13); --t1-fg:#295fa8; --t1-line: rgba(42,110,184,0.28); --t1-dot:#2a6eb8;
+  --t2-soft: rgba(176,120,20,0.15); --t2-fg:#8a5c00; --t2-line: rgba(176,120,20,0.30); --t2-dot:#b07814;
+  --t3-soft: rgba(110,110,120,0.14); --t3-fg:#5c5c64; --t3-line: rgba(110,110,120,0.28); --t3-dot:#6e6e78;
+  --root-soft: rgba(120,80,180,0.13); --root-fg:#6a44a8; --root-line:rgba(120,80,180,0.28);
+  --seg-apps:#7b8794; --seg-dev:#2a6eb8; --seg-cache:#158a66; --seg-data:#b07814;
+  --seg-sys:#8a6bb0; --seg-purge:#5aa9d6; --seg-free:#cfcfd4;
+  --shadow: 0 20px 60px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12);
+}
+
+[data-theme="dark"] {
+  --win:#1c1c1e; --content:#1c1c1e; --sidebar:#252528; --toolbar:#2b2b2e;
+  --text:#f2f2f5; --text2:#a0a0a6; --text3:#77777d;
+  --border: rgba(255,255,255,0.10); --border2: rgba(255,255,255,0.06);
+  --card:#2a2a2d; --card-line: rgba(255,255,255,0.08); --hover: rgba(255,255,255,0.05);
+  --active: rgba(255,255,255,0.09); --sel: rgba(40,120,210,0.24); --sel-line: rgba(70,150,240,0.7);
+  --accent:#3a92ff; --accent-fg:#ffffff;
+  --t0-soft: rgba(38,168,126,0.18); --t0-fg:#4fcfa1; --t0-line: rgba(38,168,126,0.4); --t0-dot:#33b98d;
+  --t1-soft: rgba(74,150,240,0.18); --t1-fg:#6db1ff; --t1-line: rgba(74,150,240,0.4); --t1-dot:#4a96f0;
+  --t2-soft: rgba(214,160,60,0.20); --t2-fg:#e6b45a; --t2-line: rgba(214,160,60,0.42); --t2-dot:#d6a03c;
+  --t3-soft: rgba(150,150,160,0.18); --t3-fg:#b0b0b8; --t3-line: rgba(150,150,160,0.34); --t3-dot:#96969b;
+  --root-soft: rgba(160,120,220,0.18); --root-fg:#c0a0f0; --root-line:rgba(160,120,220,0.4);
+  --seg-apps:#8a95a3; --seg-dev:#4a96f0; --seg-cache:#33b98d; --seg-data:#d6a03c;
+  --seg-sys:#a888d0; --seg-purge:#6db8e0; --seg-free:#3a3a3e;
+  --shadow: 0 20px 60px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.4);
+}
+
+@keyframes skel { 0%{opacity:0.4} 50%{opacity:0.75} 100%{opacity:0.4} }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes barfill { from { transform: scaleX(0); } }

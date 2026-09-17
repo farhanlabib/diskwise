@@ -1,0 +1,20 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`formatExplain > matches the snapshot 1`] = `
+"What macOS calls "System Data": 10.0 GB
+
+CoreSimulator                ██████████                   4.0 GB
+    Xcode simulator data: runtime images, simulated devices and caches.
+  └ Images  3.0 GB
+  └ Devices  1.0 GB
+/private/var                 █████                        2.2 GB
+    Runtime state for macOS and apps: swap, databases and logs.
+Local Time Machine snapshots                                 0 B
+    Local Time Machine snapshots. Their size can't be measured without admin rights.
+    $ tmutil thinlocalsnapshots / 10000000000 4
+Unmeasured                   █████████                    3.8 GB
+    Protected areas, admin-only folders and snapshots. macOS keeps them from being read, so macsweep reports the gap instead of guessing.
+
+Measured 6.2 GB of 10.0 GB
+"
+`;

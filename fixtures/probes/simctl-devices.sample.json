@@ -1,0 +1,29 @@
+{
+  "devices": {
+    "com.apple.CoreSimulator.SimRuntime.iOS-17-4": [
+      {
+        "udid": "8A1B2C3D-4E5F-6071-8293-A4B5C6D7E8F9",
+        "name": "iPhone 15",
+        "state": "Shutdown",
+        "isAvailable": true,
+        "dataPathSize": 12345678
+      },
+      {
+        "udid": "9B2C3D4E-5F60-7182-93A4-B5C6D7E8F901",
+        "name": "iPhone 14",
+        "state": "Shutdown",
+        "isAvailable": false,
+        "dataPathSize": 98765432
+      }
+    ],
+    "com.apple.CoreSimulator.SimRuntime.watchOS-10-4": [
+      {
+        "udid": "AC3D4E5F-6071-8293-A4B5-C6D7E8F90112",
+        "name": "Apple Watch Series 9 (45mm)",
+        "state": "Shutdown",
+        "isAvailable": false,
+        "dataPathSize": 4321
+      }
+    ]
+  }
+}

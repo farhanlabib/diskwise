@@ -1,0 +1,22 @@
+{
+  "0A1B2C3D-4E5F-6789-ABCD-EF0123456789": {
+    "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-1",
+    "version": "26.1",
+    "build": "23B86",
+    "platformIdentifier": "com.apple.platform.iphonesimulator",
+    "sizeBytes": 17179869184,
+    "state": "Ready",
+    "deletable": true,
+    "lastUsedAt": "2026-06-01T09:12:33Z"
+  },
+  "1F2E3D4C-5B6A-7980-9182-A3B4C5D6E7F8": {
+    "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-18-4",
+    "version": "18.4",
+    "build": "22E238",
+    "platformIdentifier": "com.apple.platform.iphonesimulator",
+    "sizeBytes": 8589934592,
+    "state": "Ready",
+    "deletable": true,
+    "lastUsedAt": null
+  }
+}

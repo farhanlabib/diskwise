@@ -1,0 +1,42 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`formatTable > matches the snapshot 1`] = `
+"Container 494.4 GB · used 431.0 GB · free 63.4 GB
+Full Disk Access: limited — Grant Full Disk Access to iTerm2 in System Settings → Privacy & Security → Full Disk Access, then re-run macsweep audit.
+
+Tier 0 · Regenerates                                                      8.4 GB
+  Xcode DerivedData                                                       8.4 GB
+    because Xcode rebuilds these from your source on the next build; nothing here is unique. · restore cost: Rebuilt locally on the next Xcode build (a few minutes)
+    - acme-web-abc123 (last built 12 days ago)  8.4 GB
+
+Tier 1 · Re-download                                                     25.5 GB
+  iOS 26.1 simulator runtime                                             16.0 GB
+    because No simulator uses this runtime, and iOS 26.1 is still downloadable from Apple. · restore cost: Re-download ~16 GB from Apple (Xcode → Settings → Components)
+    - iOS 26.1 (23B86), unused 94 days  16.0 GB
+  node_modules in 7 projects untouched 14+ days                           7.2 GB
+    because Installed dependencies are reproducible from each project lockfile. · restore cost: pnpm install (or npm install) in each project
+    - ~/code/acme-web (untouched 41 days)  1.8 GB
+    - ~/code/acme-api (untouched 67 days)  1.4 GB
+    - ~/code/marketing-site (untouched 22 days)  1.1 GB
+    - ~/code/legacy-portal (untouched 180 days)  950.0 MB
+    - ~/code/design-system (untouched 30 days)  800.0 MB
+    … and 2 more
+  Simulator dyld cache [needs root]                                       2.3 GB
+    because CoreSimulator rebuilds the dyld shared cache on demand the next time a simulator boots. · restore cost: Rebuilt automatically on the next simulator boot
+    - Builds for 3 uninstalled runtimes  2.3 GB
+    $ sudo rm -rf ~/Library/Developer/CoreSimulator/Caches/dyld
+
+Tier 3 · Protected (report only)                                          2.0 GB
+  Swap files                                                              2.0 GB
+    because macOS manages swap dynamically; removing it can crash or corrupt the running system. · restore cost: Not applicable — macOS recreates and sizes this itself
+    - Dynamic swap, currently 2.0 GB  2.0 GB
+
+Traps
+  ~/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw looks like 228.0 GB but uses 2.7 GB - Sparse file: only 2.7 GB is allocated, and Docker grows it as images are added.
+
+Unreadable: 2 paths
+
+Reclaimable: 33.9 GB  (tier 0: 8.4 GB · tier 1: 25.5 GB · tier 2: 0 B)
+Nothing was deleted. Run \`macsweep plan\` to build a cleanup plan.
+"
+`;

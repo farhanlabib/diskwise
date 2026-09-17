@@ -1,0 +1,23 @@
+{
+  "Images": [
+    { "Repository": "node", "Tag": "20", "ID": "a1b2c3d4e5f6a7b8", "Size": "1.2GB", "Containers": 2 },
+    { "Repository": "postgres", "Tag": "16", "ID": "b2c3d4e5f6a1b2c3", "Size": "350MB", "Containers": "0" },
+    { "Repository": "<none>", "Tag": "<none>", "ID": "sha256:c3d4e5f6a1b2c3d4", "Size": "180MB", "Containers": "0" },
+    { "Repository": "redis", "Tag": "7", "ID": "sha256:d4e5f6a1b2c3d4e5", "Size": "12.5kB", "Containers": 0 }
+  ],
+  "Containers": [
+    { "Names": "web", "State": "running", "Size": "20.5kB" },
+    { "Names": "db", "State": "exited", "Size": "1.5MB" },
+    { "Names": "worker", "State": "created", "Size": "0B" }
+  ],
+  "Volumes": [
+    { "Name": "pgdata", "Size": "220MB", "Links": 2 },
+    { "Name": "scratch", "Size": "0B", "Links": 0 }
+  ],
+  "BuildCache": [
+    { "Size": "500MB", "Reclaimable": "500MB" },
+    { "Size": "300MB", "Reclaimable": "" },
+    { "Size": "136MB" },
+    { "Size": "72.9kB" }
+  ]
+}

@@ -1,21 +1,57 @@
 {
   "name": "macsweep",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Explains where your Mac's disk space went and only deletes what is provably safe.",
   "license": "MIT",
+  "author": "Farhan Labib",
+  "homepage": "https://github.com/farhanlabib/macsweep#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/farhanlabib/macsweep.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/farhanlabib/macsweep/issues"
+  },
+  "keywords": [
+    "macos",
+    "disk",
+    "cleanup",
+    "storage",
+    "system-data",
+    "cli"
+  ],
   "type": "module",
-  "bin": { "macsweep": "./dist/index.js" },
-  "files": ["dist"],
-  "engines": { "node": ">=20" },
+  "bin": {
+    "macsweep": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
-    "build": "tsup src/index.ts --format esm --platform node --target node20 --clean --noExternal @macsweep/core --noExternal @macsweep/report --noExternal @macsweep/server",
-    "typecheck": "tsc -p tsconfig.json"
+    "build": "tsup && node scripts/copy-assets.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "prepack": "cp ../../LICENSE ./LICENSE"
   },
   "dependencies": {
-    "@macsweep/core": "workspace:*",
-    "@macsweep/report": "workspace:*",
-    "@macsweep/server": "workspace:*",
     "commander": "^12.1.0",
     "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@macsweep/core": "workspace:*",
+    "@macsweep/report": "workspace:*",
+    "@macsweep/server": "workspace:*"
   }
 }

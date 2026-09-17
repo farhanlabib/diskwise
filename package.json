@@ -3,13 +3,16 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.20.0",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "pnpm -r --if-present build",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "vitest run",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "rules:validate": "vitest run packages/core/src/rules"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

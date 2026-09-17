@@ -1,0 +1,64 @@
+name: Dangerous rule report
+description: A rule or app profile deleted data it should not have, or escaped its declared roots.
+title: '[DANGEROUS RULE] '
+labels: ['safety']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A rule or app profile that deletes user data, escapes its roots, or bypasses dry-run is a security bug.
+        Please read [SECURITY.md](../../SECURITY.md) for how we handle reports, and redact your report before posting.
+  - type: input
+    id: rule-id
+    attributes:
+      label: Rule id
+      description: From `macsweep rules list`, the finding output, or the journal entry.
+      placeholder: xcode.derived-data
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What was deleted, or offered to be deleted?
+      description: Which paths, how many bytes, and whether you ran with `--apply`.
+      placeholder: |
+        `macsweep clean --tier 1 --apply` offered to delete ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+      description: Should the rule have been report-only, a higher tier, or outside its roots?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: macsweep --version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      description: Output of `sw_vers -productVersion`, and your Mac's architecture.
+      placeholder: 14.6 (23G80), Apple Silicon
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Redacted report
+      description: Paste the output of `macsweep report --markdown --redact`. Never paste a raw username or private path.
+      render: markdown
+    validations:
+      required: true
+  - type: checkboxes
+    id: redacted
+    attributes:
+      label: Redaction
+      options:
+        - label: I have redacted usernames, hostnames, and any private paths from this report.
+          required: true
