@@ -11,7 +11,7 @@ Based on `PLAN.md` with the adjustments in `AUDIT.md` applied. IDs are stable. `
 | P0-1 | Check `diskwise` / `@diskwise` on npm, Homebrew and GitHub. Do a quick trademark check on "Mac" in the app name | S | — | Names chosen and written into PLAN §2 |
 | P0-2 | ~~Fold the AUDIT.md adjustments into PLAN.md~~ **Done (PLAN v2, includes Apps feature)** | S | — | PLAN.md updated, AUDIT marked resolved |
 | P0-5 | ~~Apple Developer ID~~ **Not needed.** Create a `homebrew-tap` repo instead | S | P0-4 | Tap repo exists |
-| P0-3 | Pin decisions: macOS ≥ 14, Apple Silicon + Intel, Node ≥ 20, ESM, tsup build, drop update check in v1 | S | — | Listed in PLAN §2 |
+| P0-3 | Pin decisions: macOS ≥ 14, Apple Silicon + Intel, Node ≥ 22, ESM, tsup build, drop update check in v1 | S | — | Listed in PLAN §2 |
 | P0-4 | `git init`, create GitHub repo, MIT LICENSE, `.gitignore`, `.editorconfig` | S | P0-1 | Repo pushed |
 
 ## Phase 1 — Monorepo scaffold

@@ -56,7 +56,7 @@ Four things no competitor does well, which are the whole point of diskwise:
 | Distribution | npm (`npx diskwise`), a Homebrew formula in our own tap (built from source), and later a `homebrew-core` submission |
 | Scope | Dev-first, with general and per-app tiers behind the same safety engine |
 | Minimum OS | macOS 14 Sonoma+, Apple Silicon and Intel |
-| Node engine | `>=20`, ESM only, built with `tsup` |
+| Node engine | `>=22` (Node 20 is end-of-life), ESM only, built with `tsup` |
 | License | MIT |
 
 ---

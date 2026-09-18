@@ -49,7 +49,7 @@ Tier 3 is a feature, not a gap: it is how diskwise explains swap, `/private/var/
 npx diskwise audit          # no install
 npm i -g diskwise          # then just: diskwise audit
 
-# Build from source (Node 20+ and Xcode Command Line Tools):
+# Build from source (Node 22+ and Xcode Command Line Tools):
 pnpm install
 packages/native-helper/build.sh
 pnpm -F @diskwise/ui build
