@@ -12,8 +12,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  unit:
-    name: Unit
+  # diskwise is macOS-only: the test suite depends on APFS, macOS tools (plutil, mdls,
+  # codesign) and macOS path layout, so tests run in the macOS job. This job is a fast
+  # lint + typecheck gate.
+  lint:
+    name: Lint and typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -25,7 +28,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm test
 
   macos:
     name: macOS
