@@ -23,7 +23,7 @@
   ],
   "type": "module",
   "bin": {
-    "diskwise": "./dist/index.js"
+    "diskwise": "dist/index.js"
   },
   "files": [
     "dist",
