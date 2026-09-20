@@ -58,3 +58,11 @@ Review is requested automatically from the maintainer via CODEOWNERS. Respond to
 ## Maintainers: repository settings
 
 `scripts/setup-github.sh` applies the settings described above (squash merges only, delete branch on merge, branch protection on `main` with the required checks). Run it once after creating the repository and re-run it to repair drift; `--dry-run` prints the `gh api` calls without applying them.
+
+## Maintainers: cutting a release
+
+Merging a version bump to `main` is what publishes. Run the **Prepare release** workflow (`.github/workflows/release-prepare.yml`) with `patch`, `minor`, `major`, or an explicit `X.Y.Z` — it opens a `chore(release): vX.Y.Z` pull request that bumps `packages/cli/package.json` and `packages/cli/src/version.ts`. Merging that PR runs `.github/workflows/release.yml`, which publishes to npm, creates the tag and GitHub release, and updates the Homebrew tap. Any other merge to `main` publishes nothing, and pushing a `vX.Y.Z` tag by hand still releases that version.
+
+The bump pull request is opened with the workflow token, so CI does not run on it and the required checks never report; merge it with the admin bypass that `enforce_admins: false` allows.
+
+A release needs npm credentials — the `NPM_TOKEN` secret, or npm trusted publishing configured for this repository — and `TAP_GITHUB_TOKEN` for the tap. Without npm credentials the Release workflow stops within seconds and says so. The one-time setup is in [packaging/README.md](../packaging/README.md).
