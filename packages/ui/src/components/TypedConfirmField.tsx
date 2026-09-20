@@ -20,6 +20,7 @@ export function TypedConfirmField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={expected}
+        aria-label={`Type ${expected} ${prompt.replace(/:$/, '')}`}
         spellCheck={false}
         autoComplete="off"
         className="w-full rounded-[7px] border border-border bg-content px-[12px] py-[9px] font-mono text-[13px] text-text outline-none"

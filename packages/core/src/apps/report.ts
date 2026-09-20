@@ -27,7 +27,10 @@ export async function buildAppReports(opts: BuildAppReportsOptions): Promise<App
     const seen = new Set<string>();
     const locations: AppLocation[] = [];
     for (const spec of specs) {
-      const result = await measure(spec.path, { seen });
+      const result = await measure(spec.path, {
+        seen,
+        ...(opts.signal ? { signal: opts.signal } : {}),
+      });
       if (result.allocated === 0) continue;
       locations.push({ ...spec, bytesAllocated: result.allocated });
     }
@@ -36,7 +39,7 @@ export async function buildAppReports(opts: BuildAppReportsOptions): Promise<App
     let cleanable = 0;
     let data = 0;
     for (const location of locations) {
-      if (location.actionable) cleanable += location.bytesAllocated;
+      if (location.state === 'cleanable') cleanable += location.bytesAllocated;
       else data += location.bytesAllocated;
     }
 

@@ -223,9 +223,22 @@ export function Cleanup({
             </div>
             <div className="rounded-[8px] border border-border bg-win px-[12px] py-[11px]">
               <div className="font-mono text-[11.5px] break-all">
-                {detail.manualCommand ?? detail.action ?? '(explained only)'}
+                {detail.action ?? detail.manualCommand ?? '(explained only)'}
               </div>
             </div>
+            {detail.action !== null && detail.manualCommand !== undefined ? (
+              <div className="mt-[12px]">
+                <div className="mb-[6px] text-[11px] [font-weight:600] uppercase tracking-[0.05em] text-text3">
+                  Prevention
+                </div>
+                <div className="rounded-[8px] border border-border bg-win px-[12px] py-[11px]">
+                  <div className="mb-[4px] text-[11.5px] text-text2">
+                    To stop this coming back, run:
+                  </div>
+                  <div className="font-mono text-[11.5px] break-all">{detail.manualCommand}</div>
+                </div>
+              </div>
+            ) : null}
             <div className="mt-[16px] mb-[6px] text-[11px] [font-weight:600] uppercase tracking-[0.05em] text-text3">
               Paths
             </div>

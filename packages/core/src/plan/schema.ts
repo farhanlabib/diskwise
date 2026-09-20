@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assertPlanItemInCatalog } from '../rules/catalog';
 import type { ActionId, Category, CleanupPlan } from '../types';
 
 // Runtime enums mirroring the unions in types.ts. The `satisfies` clause plus the
@@ -141,7 +142,9 @@ const _check: z.infer<typeof CleanupPlanSchema> extends CleanupPlan ? true : nev
 
 export function parsePlan(json: string): CleanupPlan {
   try {
-    return CleanupPlanSchema.parse(JSON.parse(json));
+    const plan = CleanupPlanSchema.parse(JSON.parse(json));
+    plan.items.forEach((item) => assertPlanItemInCatalog(item));
+    return plan;
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     throw new Error(`Invalid plan: ${detail}`);

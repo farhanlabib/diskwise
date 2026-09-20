@@ -62,6 +62,9 @@ export class JobManager {
         (result) => {
           if (controller.signal.aborted) {
             job.state = 'cancelled';
+            // Keep what the run produced before the abort, so a cancelled job
+            // stays distinguishable from a failed one in the result.
+            job.result = result;
             emit('error', 'cancelled');
           } else {
             job.state = 'done';

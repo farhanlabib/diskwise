@@ -59,9 +59,44 @@ describe('findOrphanedAppData', () => {
     expect(report.app.name).toBe('com.old.chatapp');
     expect(report.app.path).toBe('');
     expect(report.locations.map((l) => l.kind).sort()).toEqual(['app-data', 'caches', 'settings']);
-    expect(report.locations.find((l) => l.kind === 'caches')?.actionable).toBe(true);
-    expect(report.locations.find((l) => l.kind === 'app-data')?.actionable).toBe(true);
-    expect(report.locations.find((l) => l.kind === 'settings')?.actionable).toBe(false);
+    expect(report.locations.find((l) => l.kind === 'caches')?.state).toBe('cleanable');
+    expect(report.locations.find((l) => l.kind === 'app-data')?.state).toBe(
+      'deletableWithConfirmation',
+    );
+    expect(report.locations.find((l) => l.kind === 'settings')?.state).toBe('reportOnly');
+  });
+
+  it('counts orphaned app data as app data, never as cleanable cache bytes', async () => {
+    const home = await makeHome();
+    await dirWithFile(home, 'Library/Caches/com.old.chatapp');
+    await dirWithFile(home, 'Library/Application Support/com.old.chatapp');
+    await dirWithFile(home, 'Library/Containers/com.old.chatapp');
+
+    const reports = await findOrphanedAppData({
+      home,
+      installed: [],
+      fullDiskAccess: true,
+      minBytes: 0,
+    });
+
+    expect(reports).toHaveLength(1);
+    const report = reports[0]!;
+    const dataLocations = report.locations.filter(
+      (l) => l.state === 'deletableWithConfirmation',
+    );
+    // Both Application Support and Containers are tier 2 app data.
+    expect(dataLocations.map((l) => [l.kind, l.tier])).toEqual([
+      ['app-data', 2],
+      ['app-data', 2],
+    ]);
+    const cachesBytes = report.locations
+      .filter((l) => l.state === 'cleanable')
+      .reduce((sum, l) => sum + l.bytesAllocated, 0);
+    const dataBytes = dataLocations.reduce((sum, l) => sum + l.bytesAllocated, 0);
+    expect(dataBytes).toBeGreaterThan(0);
+    expect(report.totals.cleanable).toBe(cachesBytes);
+    expect(report.totals.data).toBe(dataBytes);
+    expect(report.totals.all).toBe(cachesBytes + dataBytes);
   });
 
   it('does not report a helper bundle id when the parent app is installed', async () => {

@@ -43,7 +43,7 @@ export function formatPlan(plan: CleanupPlan): string {
   return `${lines.join('\n')}\n`;
 }
 
-export function formatExecution(result: ExecuteResult): string {
+export function formatExecution(result: ExecuteResult, dryRunCommand?: string): string {
   const lines = result.results.map((item) => {
     const detail = item.reason ?? formatBytes(item.status === 'done' ? item.freed : item.bytesBefore);
     const permanent = item.restorable === false && item.action === 'trash-path' && item.status === 'done';
@@ -57,9 +57,21 @@ export function formatExecution(result: ExecuteResult): string {
       `Freed ${formatBytes(result.freed)} · run ${result.runId ?? 'unknown'} · undo Trash moves with \`diskwise undo --last\``,
     );
   } else {
-    lines.push('Dry run: nothing was deleted. Re-run with --apply to clean.');
+    lines.push('Dry run: nothing was deleted.');
+    lines.push(
+      dryRunCommand !== undefined
+        ? `Run this to apply it: ${dryRunCommand}`
+        : 'Re-run with --apply to clean.',
+    );
   }
   return `${lines.join('\n')}\n`;
+}
+
+export function formatRecap(freed: number, freeSpace?: number): string {
+  if (freeSpace === undefined) {
+    return `Freed ${formatBytes(freed)}. Free space could not be read.\n`;
+  }
+  return `Freed ${formatBytes(freed)}. Free space is now ${formatBytes(freeSpace)}.\n`;
 }
 
 export function formatRuns(runs: RunSummary[]): string {

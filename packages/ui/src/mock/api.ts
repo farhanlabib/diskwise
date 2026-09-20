@@ -9,6 +9,7 @@ import type {
   Tier,
 } from '@diskwise/core/types';
 import { apps, locationGroups } from './data';
+import type { AppLocationGroup } from './types';
 
 function actionFor(finding: Finding): ActionId {
   if (finding.action) return finding.action;
@@ -61,33 +62,40 @@ const KIND: Record<string, AppLocationKind> = {
   settings: 'settings',
 };
 
+function stateForGroup(action: AppLocationGroup['action']): AppLocation['state'] {
+  if (action === 'clean') return 'cleanable';
+  if (action === 'trash') return 'deletableWithConfirmation';
+  return 'reportOnly';
+}
+
 export function appReportsForMock(): AppReport[] {
   return apps.map((app) => {
     const groups = locationGroups(app);
     const locations: AppLocation[] = groups.map((group) => ({
       kind: KIND[group.id] ?? 'app-data',
       tier: group.tier,
-      actionable: group.action === 'clean',
+      state: stateForGroup(group.action),
       path: `~/Library/Application Support/${app.bundleId}`,
       bytesAllocated: group.sizeBytes,
       source: 'profile',
     }));
     const cleanable = locations
-      .filter((location) => location.actionable)
+      .filter((location) => location.state === 'cleanable')
       .reduce((sum, location) => sum + location.bytesAllocated, 0);
-    const data = groups
-      .filter((group) => group.id === 'appdata')
-      .reduce((sum, group) => sum + group.sizeBytes, 0);
+    const data = locations
+      .filter((location) => location.state !== 'cleanable')
+      .reduce((sum, location) => sum + location.bytesAllocated, 0);
     return {
       app: {
         bundleId: app.bundleId,
         name: app.name,
         version: app.version.replace(/^v/, ''),
-        path: `/Applications/${app.name}.app`,
+        path: app.orphan ? '' : `/Applications/${app.name}.app`,
         running: app.running,
         bundleBytes: Math.max(0, app.totalBytes - app.cachesBytes - app.appDataBytes),
         system: false,
       },
+      ...(app.orphan ? { orphaned: true as const } : {}),
       locations,
       totals: { cleanable, data, all: app.totalBytes },
     };

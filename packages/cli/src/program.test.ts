@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { parsePlan, serializePlan } from '@diskwise/core';
 import type { CleanupPlan, PlanItem, RunSummary, Tier } from '@diskwise/core';
 import { buildProgram } from './program';
+import { formatRecap } from './format-run';
 import { promptImpl } from './prompt';
 import { sampleEngine, setEngine, type Engine } from './engine';
 
@@ -17,6 +18,15 @@ function harness(argv: string[], isTTY = false) {
     isTTY,
   });
   program.exitOverride();
+  // Subcommands copy the exit callback when they are created, which happens
+  // before the override above, so they would otherwise call process.exit().
+  const overrideAll = (command: typeof program): void => {
+    for (const sub of command.commands) {
+      sub.exitOverride();
+      overrideAll(sub);
+    }
+  };
+  overrideAll(program);
   return {
     out,
     err,
@@ -37,7 +47,8 @@ const baseItem: PlanItem = {
   action: 'remove-path',
   permanentOnly: false,
   needsConfirmation: false,
-  roots: ['/'],
+  preflight: { processes: ['Xcode'] },
+  roots: ['~/Library/Developer/Xcode/DerivedData'],
   match: {
     kind: 'dir',
     path: '/tmp/acme-web',
@@ -101,6 +112,28 @@ async function tempPlanFile(plan: CleanupPlan): Promise<string> {
   return file;
 }
 
+interface RawPlanItem {
+  id: string;
+  ruleId: string;
+  action: string;
+  tier: number;
+  needsConfirmation: boolean;
+  roots: string[];
+}
+
+interface RawPlan {
+  items: RawPlanItem[];
+}
+
+async function tamperedPlanFile(mutate: (raw: RawPlan) => void): Promise<string> {
+  const raw = JSON.parse(serializePlan(planWith([baseItem]))) as RawPlan;
+  mutate(raw);
+  const dir = await mkdtemp(join(tmpdir(), 'diskwise-cli-'));
+  const file = join(dir, 'plan.json');
+  await writeFile(file, JSON.stringify(raw));
+  return file;
+}
+
 const realAsk = promptImpl.ask;
 
 afterEach(() => {
@@ -136,6 +169,52 @@ describe('diskwise CLI', () => {
     const { out, run } = harness(['rules', 'list']);
     await run();
     expect(out.join('')).toContain('xcode.derived-data');
+  });
+});
+
+describe('bare invocation', () => {
+  it('prints a short plain-language starting point instead of the raw help', async () => {
+    const { out, run } = harness([]);
+    await run();
+    const text = out.join('');
+    expect(text).toContain('diskwise scan');
+    expect(text).toContain('diskwise fix');
+    expect(text).toContain('diskwise web');
+    expect(text).toContain('diskwise check');
+    expect(text).not.toContain('Usage:');
+  });
+
+  it('still errors for an unknown command', async () => {
+    const { err, run } = harness(['nope']);
+    await expect(run()).rejects.toMatchObject({ exitCode: 1 });
+    expect(err.join('')).toContain("unknown command 'nope'");
+  });
+});
+
+describe('aliases', () => {
+  it.each([
+    ['scan', 'audit', 'audit|scan'],
+    ['fix', 'clean', 'clean|fix'],
+    ['web', 'ui', 'ui|web'],
+    ['check', 'doctor', 'doctor|check'],
+    ['leftovers', 'report', 'report|leftovers'],
+  ])('%s reaches %s', async (alias, long, helpTerm) => {
+    const viaAlias = harness([alias, '--help']);
+    const viaLong = harness([long, '--help']);
+    await expect(viaAlias.run()).rejects.toMatchObject({ exitCode: 0 });
+    await expect(viaLong.run()).rejects.toMatchObject({ exitCode: 0 });
+
+    const aliasHelp = viaAlias.out.join('');
+    expect(aliasHelp).toBe(viaLong.out.join(''));
+    expect(aliasHelp).toContain(helpTerm);
+  });
+
+  it('scan behaves like audit', async () => {
+    const viaAlias = harness(['scan', '--json']);
+    const viaLong = harness(['audit', '--json']);
+    await viaAlias.run();
+    await viaLong.run();
+    expect(viaAlias.out.join('')).toBe(viaLong.out.join(''));
   });
 });
 
@@ -309,6 +388,145 @@ describe('clean', () => {
 
     expect(captured?.permanentRuleIds).toEqual([]);
     expect(captured?.confirmedRuleIds).toEqual(['user-data.library']);
+  });
+});
+
+describe('clean --plan rejects plans that disagree with the rule catalog', () => {
+  it('rejects widened roots', async () => {
+    const file = await tamperedPlanFile((raw) => {
+      raw.items[0]!.roots = ['/'];
+    });
+    const { run } = harness(['clean', '--plan', file]);
+    await expect(run()).rejects.toThrow(/^Invalid plan:.*records roots/);
+  });
+
+  it('rejects a substituted action', async () => {
+    const file = await tamperedPlanFile((raw) => {
+      raw.items[0]!.action = 'trash-path';
+    });
+    const { run } = harness(['clean', '--plan', file]);
+    await expect(run()).rejects.toThrow(/records action "trash-path" but rule "xcode\.derived-data" now uses "remove-path"/);
+  });
+
+  it('rejects a substituted tier', async () => {
+    const file = await tamperedPlanFile((raw) => {
+      raw.items[0]!.tier = 2;
+    });
+    const { run } = harness(['clean', '--plan', file]);
+    await expect(run()).rejects.toThrow(/records tier 2 but rule "xcode\.derived-data" now uses 0/);
+  });
+
+  it('rejects a removed confirmation requirement', async () => {
+    const file = await tamperedPlanFile((raw) => {
+      raw.items[0]!.ruleId = 'ios.backups';
+      raw.items[0]!.action = 'trash-path';
+      raw.items[0]!.tier = 2;
+      raw.items[0]!.roots = ['~/Library/Application Support/MobileSync/Backup'];
+      raw.items[0]!.needsConfirmation = false;
+    });
+    const { run } = harness(['clean', '--plan', file]);
+    await expect(run()).rejects.toThrow(/records needsConfirmation false but rule "ios\.backups" now uses true/);
+  });
+
+  it('rejects an unknown rule id', async () => {
+    const file = await tamperedPlanFile((raw) => {
+      raw.items[0]!.ruleId = 'evil.rule';
+    });
+    const { run } = harness(['clean', '--plan', file]);
+    await expect(run()).rejects.toThrow(/unknown rule id "evil\.rule"/);
+  });
+
+  it('rejects duplicate item ids', async () => {
+    const file = await tamperedPlanFile((raw) => {
+      raw.items.push(JSON.parse(JSON.stringify(raw.items[0])) as RawPlanItem);
+    });
+    const { run } = harness(['clean', '--plan', file]);
+    await expect(run()).rejects.toThrow(/duplicate item id/);
+  });
+});
+
+describe('fix', () => {
+  it('is a dry run by default and says the exact apply command', async () => {
+    let captured: { apply: boolean } | undefined;
+    setEngine(
+      engineWith({
+        buildPlan: () => planWith([baseItem]),
+        executePlan: async (plan, opts) => {
+          captured = { apply: opts.apply };
+          return { planId: plan.id, apply: opts.apply, results: [], freed: 0 };
+        },
+      }),
+    );
+
+    const { out, run } = harness(['fix']);
+    await run();
+
+    expect(captured?.apply).toBe(false);
+    const text = out.join('');
+    expect(text).toContain('Dry run');
+    expect(text).toContain('diskwise fix --apply');
+  });
+
+  it('reports freed bytes and the recalculated free space after --apply', async () => {
+    setEngine(
+      engineWith({
+        buildPlan: () => planWith([baseItem]),
+        executePlan: async (plan, opts) => ({
+          planId: plan.id,
+          apply: opts.apply,
+          results: [],
+          freed: 4_200_000_000,
+        }),
+      }),
+    );
+
+    const { out, run } = harness(['fix', '--apply']);
+    await run();
+
+    const text = out.join('');
+    expect(text).toContain('Freed 4.2 GB');
+    expect(text).toContain('Free space');
+  });
+});
+
+describe('run', () => {
+  it('refuses to execute without confirmation', async () => {
+    const { out, err, run } = harness(['run', 'docker.volumes']);
+    await expect(run()).rejects.toMatchObject({ exitCode: 2 });
+    expect(err.join('')).toContain('without confirmation');
+    expect(out.join('')).toContain('docker volume ls');
+  });
+
+  it('cancels when the prompt is not answered yes', async () => {
+    promptImpl.ask = async () => 'n';
+    const { out, run } = harness(['run', 'docker.volumes'], true);
+    await run();
+    expect(out.join('')).toContain('Cancelled. Nothing was run.');
+  });
+
+  it('refuses commands that need root unless --root is passed', async () => {
+    const { err, run } = harness(['run', 'os.install-data', '--yes']);
+    await expect(run()).rejects.toMatchObject({ exitCode: 2 });
+    expect(err.join('')).toContain('administrator (root)');
+    expect(err.join('')).toContain('--root');
+  });
+
+  it('points at the tier flag for rules without a manual command', async () => {
+    const { err, run } = harness(['run', 'xcode.derived-data']);
+    await expect(run()).rejects.toMatchObject({ exitCode: 1 });
+    expect(err.join('')).toContain('diskwise fix --tier 0 --rule xcode.derived-data');
+  });
+});
+
+describe('storage recap', () => {
+  it('reports freed bytes and the recalculated free space in plain words', () => {
+    expect(formatRecap(4_200_000_000, 61_800_000_000)).toBe(
+      'Freed 4.2 GB. Free space is now 61.8 GB.\n',
+    );
+  });
+
+  it('says so when the free space is unavailable', () => {
+    expect(formatRecap(100, undefined)).toContain('Free space could not be read');
   });
 });
 

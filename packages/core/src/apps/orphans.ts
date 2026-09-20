@@ -3,6 +3,7 @@ import type { Dirent } from 'node:fs';
 import { join } from 'node:path';
 import type { AppLocation, AppLocationKind, AppReport, InstalledApp, Tier } from '../types';
 import { measure } from '../fs/walker';
+import { appLocationState } from './state';
 
 // At least three dotted parts: a bare product name like "Adobe" is never a bundle id.
 const BUNDLE_ID_RE = /^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+){2,}$/;
@@ -17,7 +18,6 @@ interface ScanSpec {
   dir: string;
   kind: AppLocationKind;
   tier: Tier;
-  actionable: boolean;
   requiresFullDiskAccess?: boolean;
   // Returns the bundle id suggested by a child name, or undefined when the name
   // does not carry one (e.g. a file that does not end in the expected suffix).
@@ -35,42 +35,36 @@ function scanSpecs(home: string): ScanSpec[] {
       dir: join(lib, 'Caches'),
       kind: 'caches',
       tier: 0,
-      actionable: true,
       toBundleId: (name) => name,
     },
     {
       dir: join(lib, 'Logs'),
       kind: 'logs',
       tier: 1,
-      actionable: true,
       toBundleId: (name) => name,
     },
     {
       dir: join(lib, 'Saved Application State'),
       kind: 'saved-state',
       tier: 1,
-      actionable: true,
       toBundleId: (name) => stripSuffix(name, SAVED_STATE_SUFFIX),
     },
     {
       dir: join(lib, 'HTTPStorages'),
       kind: 'sign-in-data',
       tier: 2,
-      actionable: false,
       toBundleId: (name) => stripSuffix(name, BINARYCOOKIES_SUFFIX) ?? name,
     },
     {
       dir: join(lib, 'Application Support'),
       kind: 'app-data',
       tier: 2,
-      actionable: true,
       toBundleId: (name) => name,
     },
     {
       dir: join(lib, 'Containers'),
       kind: 'app-data',
       tier: 2,
-      actionable: true,
       requiresFullDiskAccess: true,
       toBundleId: (name) => name,
     },
@@ -78,7 +72,6 @@ function scanSpecs(home: string): ScanSpec[] {
       dir: join(lib, 'Preferences'),
       kind: 'settings',
       tier: 3,
-      actionable: false,
       toBundleId: (name) => stripSuffix(name, PLIST_SUFFIX),
     },
   ];
@@ -151,12 +144,15 @@ export async function findOrphanedAppData(
     const seen = new Set<string>();
     const locations: AppLocation[] = [];
     for (const draft of drafts) {
-      const result = await measure(draft.path, { seen });
+      const result = await measure(draft.path, {
+        seen,
+        ...(opts.signal ? { signal: opts.signal } : {}),
+      });
       if (result.allocated === 0) continue;
       locations.push({
         kind: draft.spec.kind,
         tier: draft.spec.tier,
-        actionable: draft.spec.actionable,
+        state: appLocationState(draft.spec.kind, draft.spec.tier, true),
         path: draft.path,
         bytesAllocated: result.allocated,
         source: 'generic',
@@ -167,7 +163,9 @@ export async function findOrphanedAppData(
     let cleanable = 0;
     let data = 0;
     for (const location of locations) {
-      if (location.actionable) cleanable += location.bytesAllocated;
+      // Orphaned Application Support / Containers data is never cleanable:
+      // it only becomes deletable after an explicit opt-in.
+      if (location.state === 'cleanable') cleanable += location.bytesAllocated;
       else data += location.bytesAllocated;
     }
     const all = cleanable + data;

@@ -1,6 +1,7 @@
 import type {
   AppReport,
   AuditResult,
+  BuildAppPlanOptions,
   CleanupPlan,
   ExecuteResult,
   ItemResult,
@@ -33,7 +34,7 @@ export interface ServerEngine {
   appReports(opts: { signal: AbortSignal }): Promise<AppReport[]>;
   // PNG icon drawn from the app bundle at the given bundle id, if it exists.
   appIcon(bundleId: string): Promise<Buffer | undefined>;
-  buildAppPlan(report: AppReport): Promise<CleanupPlan>;
+  buildAppPlan(report: AppReport, opts?: BuildAppPlanOptions): Promise<CleanupPlan>;
   permissions(): Promise<PermissionStatus>;
   quitApp(bundleId: string): Promise<{ quit: boolean }>;
   version: string;

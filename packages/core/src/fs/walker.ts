@@ -48,6 +48,16 @@ export async function measure(root: string, opts: WalkOptions = {}): Promise<Wal
     if (code === 'EPERM' || code === 'EACCES') unreadable.push({ path: p, code });
   };
 
+  // Checked inside the walk loop too, so an abort during a directory's own
+  // lstat/readdir sequence stops within that directory instead of after it.
+  const stoppedByAbort = (): boolean => {
+    if (signal?.aborted) {
+      aborted = true;
+      stopped = true;
+    }
+    return stopped;
+  };
+
   const reportProgress = (p: string): void => {
     const cb = opts.onProgress;
     if (!cb) return;
@@ -93,12 +103,7 @@ export async function measure(root: string, opts: WalkOptions = {}): Promise<Wal
   const inFlight = new Set<Promise<void>>();
 
   const processDir = async (task: DirTask): Promise<void> => {
-    if (stopped) return;
-    if (signal?.aborted) {
-      aborted = true;
-      stopped = true;
-      return;
-    }
+    if (stoppedByAbort()) return;
     const { dir, depth } = task;
 
     let dirents: Dirent[];
@@ -110,7 +115,7 @@ export async function measure(root: string, opts: WalkOptions = {}): Promise<Wal
       return;
     }
 
-    if (stopped) return;
+    if (stoppedByAbort()) return;
 
     if (opts.maxDepth !== undefined && depth >= opts.maxDepth) {
       if (dirents.length > 0) truncated = true;
@@ -118,7 +123,7 @@ export async function measure(root: string, opts: WalkOptions = {}): Promise<Wal
     }
 
     for (const dirent of dirents) {
-      if (stopped) return;
+      if (stoppedByAbort()) return;
       if (opts.maxEntries !== undefined && entries >= opts.maxEntries) {
         truncated = true;
         stopped = true;

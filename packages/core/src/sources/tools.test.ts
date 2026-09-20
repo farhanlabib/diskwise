@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ProbeRunner } from '../types';
 import { detectTools } from './tools';
 
-// resolveBin reaches into the real filesystem and the user's shell, so stub it
+// resolveBin reaches into the real filesystem, so stub it
 // and drive the version probes with a fake runner instead.
 const hoisted = vi.hoisted(() => ({ installed: new Set<string>() }));
 vi.mock('../probes/bin-resolver', () => ({

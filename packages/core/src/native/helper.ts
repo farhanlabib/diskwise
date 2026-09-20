@@ -67,6 +67,8 @@ export interface TreeSizeOptions {
   skip?: string[];
   maxEntries?: number;
   timeoutMs?: number;
+  // Aborting kills the helper subprocess instead of waiting out the timeout.
+  signal?: AbortSignal;
 }
 
 const HELPER_MISSING = 'HELPER_MISSING';
@@ -128,7 +130,7 @@ export async function findHelper(): Promise<string | null> {
 
 async function run<T extends { ok: boolean; error?: string }>(
   args: string[],
-  opts: { timeoutMs?: number } = {},
+  opts: { timeoutMs?: number; signal?: AbortSignal } = {},
 ): Promise<T> {
   const helper = await findHelper();
   if (!helper) throw new Error(HELPER_MISSING);
@@ -140,6 +142,7 @@ async function run<T extends { ok: boolean; error?: string }>(
       encoding: 'utf8' as const,
       maxBuffer: 32 * 1024 * 1024,
       ...(opts.timeoutMs !== undefined ? { timeout: opts.timeoutMs } : {}),
+      ...(opts.signal ? { signal: opts.signal } : {}),
     };
     execFile(helper, args, execOpts, (error, out, stderr) => {
       // The helper reports failures as JSON on stdout with exit code 1, so prefer
@@ -198,6 +201,7 @@ export async function treeSize(
   if (opts.maxEntries !== undefined) args.push('--max-entries', String(opts.maxEntries));
   const result = await run<TreeSizeResult & { ok: true }>(args, {
     timeoutMs: opts.timeoutMs ?? DEFAULT_TREE_TIMEOUT_MS,
+    ...(opts.signal ? { signal: opts.signal } : {}),
   });
   const { ok: _ok, ...rest } = result;
   return rest;

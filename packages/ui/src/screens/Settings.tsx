@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { AuditResult } from '@diskwise/core/types';
 import { serverInfo } from '../mock/data';
-import { useMock } from '../api/client';
+import { api, useMock } from '../api/client';
 import { auditMarkdown, downloadMarkdown } from '../lib/markdown';
 import {
   loadSettings,
@@ -17,6 +17,43 @@ const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
   { value: 'dark', label: 'Dark' },
 ];
 
+// Keep in sync with the Markdown export redaction in lib/markdown.ts.
+const REDACT_USERS_RE = /\/Users\/[^/\s]+/g;
+
+function useServerVersion(): string | null {
+  const [version, setVersion] = useState<string | null>(useMock ? serverInfo.version : null);
+
+  useEffect(() => {
+    if (useMock) return;
+    let active = true;
+    api
+      .get<{ ok: boolean; version: string }>('/api/health')
+      .then((health) => {
+        if (active) setVersion(health.version);
+      })
+      .catch(() => {
+        /* server unreachable; keep the placeholder */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return version;
+}
+
+function downloadJson(filename: string, json: string): void {
+  const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
 export function Settings({
   onStopServer,
   audit,
@@ -25,6 +62,7 @@ export function Settings({
   audit?: AuditResult;
 }) {
   const [values, setValues] = useState<SettingsValues>(() => loadSettings());
+  const version = useServerVersion();
 
   const update = (patch: Partial<SettingsValues>) => {
     setValues(saveSettings(patch));
@@ -39,6 +77,13 @@ export function Settings({
     if (!audit) return;
     const markdown = auditMarkdown(audit, { redact: values.redact });
     downloadMarkdown(`diskwise-report-${audit.generatedAt.slice(0, 10)}.md`, markdown);
+  };
+
+  const exportJson = () => {
+    if (!audit) return;
+    let json = JSON.stringify(audit, null, 2);
+    if (values.redact) json = json.replace(REDACT_USERS_RE, '~');
+    downloadJson(`diskwise-report-${audit.generatedAt.slice(0, 10)}.json`, json);
   };
 
   return (
@@ -82,16 +127,16 @@ export function Settings({
                 type="number"
                 min={1}
                 value={values.nodeModulesAgeDays}
-                onChange={(event) => {
-                  const next = Number.parseInt(event.target.value, 10);
-                  update({ nodeModulesAgeDays: Number.isFinite(next) ? next : 14 });
-                }}
-                className="w-[64px] rounded-[6px] border border-card-line bg-win px-[8px] py-[4px] text-right font-mono text-[12px] text-text outline-none"
+                disabled
+                className="w-[64px] rounded-[6px] border border-card-line bg-win px-[8px] py-[4px] text-right font-mono text-[12px] text-text outline-none disabled:cursor-not-allowed disabled:opacity-50"
               />
               <span className="text-[12px] text-text2">days</span>
             </div>
           </div>
-          <div className="pb-[8px] text-[11px] text-text3">Used by the next CLI release</div>
+          <div className="pb-[8px] text-[11px] text-text3">
+            Not connected to scanning — the engine’s node_modules rule uses a fixed 14-day
+            threshold.
+          </div>
           <div className="flex items-center justify-between border-t border-border2 py-[8px] text-[13px]">
             <span>Redact usernames in exported reports</span>
             <button
@@ -113,7 +158,6 @@ export function Settings({
         <div className="rounded-[10px] border border-card-line bg-card p-[18px]">
           <div className="mb-[12px] text-[13px] [font-weight:600]">Local server</div>
           <Row label="Address" value={window.location.host} mono />
-          <Row label="Uptime" value={useMock ? serverInfo.uptime : '—'} mono />
           <button
             type="button"
             onClick={onStopServer}
@@ -126,7 +170,7 @@ export function Settings({
         <div className="rounded-[10px] border border-card-line bg-card p-[18px]">
           <div className="mb-[8px] text-[13px] [font-weight:600]">About</div>
           <div className="text-[12.5px] leading-[1.6] text-text2">
-            DiskWise v1.0 · Open source, MIT ·{' '}
+            DiskWise v{version ?? '—'} · Open source, MIT ·{' '}
             <span className="text-text">No outbound network. No telemetry.</span>
           </div>
           <div className="mt-[12px] flex gap-[10px]">
@@ -140,7 +184,9 @@ export function Settings({
             </button>
             <button
               type="button"
-              className="cursor-pointer rounded-[6px] border border-card-line bg-win px-[13px] py-[7px] text-[12px] text-text"
+              onClick={exportJson}
+              disabled={!audit}
+              className="cursor-pointer rounded-[6px] border border-card-line bg-win px-[13px] py-[7px] text-[12px] text-text disabled:cursor-not-allowed disabled:opacity-50"
             >
               Export JSON
             </button>

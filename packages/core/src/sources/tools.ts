@@ -61,15 +61,15 @@ async function detectTool(
   let path: string | undefined;
 
   if (spec.pathFrom) {
-    const pathBin = await resolveBin(spec.pathFrom.bin, { run, home });
+    const pathBin = await resolveBin(spec.pathFrom.bin, { home });
     if (!pathBin) return info;
     const result = await run(pathBin, spec.pathFrom.args, { timeoutMs: TIMEOUT_MS });
     if (result.exitCode !== 0) return info;
     path = result.stdout.trim() || undefined;
     if (path === undefined) return info;
-    versionBin = await resolveBin(spec.bin, { run, home });
+    versionBin = await resolveBin(spec.bin, { home });
   } else {
-    versionBin = await resolveBin(spec.bin, { run, home });
+    versionBin = await resolveBin(spec.bin, { home });
     if (!versionBin) return info;
     path = versionBin;
   }

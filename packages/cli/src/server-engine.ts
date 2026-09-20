@@ -114,8 +114,8 @@ export function createServerEngine(opts: { home?: string } = {}): ServerEngine {
         await rm(out, { force: true }).catch(() => {});
       }
     },
-    buildAppPlan(report) {
-      return buildAppPlan(report);
+    buildAppPlan(report, opts) {
+      return buildAppPlan(report, opts ?? {});
     },
     permissions() {
       return checkFullDiskAccess(home);

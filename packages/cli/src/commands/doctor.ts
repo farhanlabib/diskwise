@@ -1,9 +1,15 @@
 import { homedir } from 'node:os';
 import { Command } from 'commander';
 import { formatBytes } from '@diskwise/report';
-import { checkFullDiskAccess, getDiskInfo, native, runProbe } from '@diskwise/core';
+import {
+  checkFullDiskAccess,
+  detectTools,
+  getDiskInfo,
+  native,
+  runProbe,
+  type ToolInfo,
+} from '@diskwise/core';
 import type { DiskInfo, PermissionStatus, ProbeRunner } from '@diskwise/core/types';
-import { detectTools, type ToolInfo } from '../../../core/src/sources/tools';
 import type { IO } from '../program';
 
 export interface DoctorDeps {

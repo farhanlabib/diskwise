@@ -1,6 +1,9 @@
 import { readFile, writeFile } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
 import { Command } from 'commander';
 import {
+  allRules,
+  getDiskInfo,
   parsePlan,
   serializePlan,
   type AuditResult,
@@ -16,13 +19,23 @@ import { registerAppsCommand } from './commands/apps';
 import { registerDoctorCommand } from './commands/doctor';
 import { registerUiCommand } from './commands/ui';
 import { getEngine } from './engine';
-import { formatExecution, formatPlan, formatRuns, formatUndo } from './format-run';
+import { formatExecution, formatPlan, formatRecap, formatRuns, formatUndo } from './format-run';
 import { confirmTyped, promptImpl } from './prompt';
 
 export { VERSION } from './version';
 import { VERSION } from './version';
 
 const CATEGORIES = ['dev', 'system', 'browser', 'app', 'user-data', 'os-leftovers'] as const;
+
+const START_HERE = `diskwise shows where your Mac's disk space went and cleans up what is safe to delete.
+
+  See where the space went:  diskwise scan
+  Free up the safe stuff:    diskwise fix
+  Open the app:              diskwise web
+  Check your Mac is set up:  diskwise check
+
+For everything else: diskwise --help
+`;
 
 export interface IO {
   stdout: (s: string) => void;
@@ -49,6 +62,25 @@ function ruleTable(rows: Array<{ id: string; tier: number; category: string; tit
   return `${all.map(format).join('\n')}\n`;
 }
 
+// The exact command a dry run should be re-run with, so nobody has to guess.
+function dryRunApplyCommand(options: {
+  tier?: string;
+  category?: string;
+  rule?: string[];
+  plan?: string;
+  interactive?: boolean;
+}): string {
+  const flags: string[] = [];
+  if (options.tier !== undefined) flags.push(`--tier ${options.tier}`);
+  if (options.category !== undefined) flags.push(`--category ${options.category}`);
+  if (options.rule !== undefined && options.rule.length > 0) {
+    flags.push(`--rule ${options.rule.join(' ')}`);
+  }
+  if (options.plan !== undefined) flags.push(`--plan ${options.plan}`);
+  if (options.interactive === true) flags.push('--interactive');
+  return `diskwise fix${flags.length > 0 ? ` ${flags.join(' ')}` : ''} --apply`;
+}
+
 export function buildProgram(io: IO): Command {
   const program = new Command();
 
@@ -60,6 +92,21 @@ export function buildProgram(io: IO): Command {
   program.configureOutput({
     writeOut: (s) => io.stdout(s),
     writeErr: (s) => io.stderr(s),
+  });
+
+  // The bare-invocation action below would make commander drop the implicit
+  // `help` command, so it is re-enabled explicitly.
+  program.helpCommand(true);
+
+  // Bare `diskwise` prints a plain-language starting point. Commander hands
+  // unknown commands to this action as operands, so reproduce its standard
+  // unknown-command error from here.
+  program.action((_options: Record<string, unknown>, command: Command) => {
+    if (command.args.length > 0) {
+      program.error(`error: unknown command '${command.args[0]}'`, { exitCode: 1 });
+      return;
+    }
+    io.stdout(START_HERE);
   });
 
   const requireCategory = (category: string | undefined): void => {
@@ -124,6 +171,7 @@ export function buildProgram(io: IO): Command {
 
   program
     .command('audit')
+    .alias('scan')
     .description('Scan the disk and report reclaimable space by tier')
     .option('--json', 'print the audit as JSON')
     .option('--category <name>', `limit to one category: ${CATEGORIES.join(', ')}`)
@@ -182,6 +230,7 @@ export function buildProgram(io: IO): Command {
 
   program
     .command('clean')
+    .alias('fix')
     .description('Execute a cleanup plan (dry run unless --apply)')
     .option('--tier <list>', 'tiers to include (comma list of 0, 1, 2)')
     .option('--category <name>', `limit to one category: ${CATEGORIES.join(', ')}`)
@@ -254,7 +303,13 @@ export function buildProgram(io: IO): Command {
           process.removeListener('SIGINT', onSigint);
         }
 
-        io.stdout(formatExecution(execution));
+        io.stdout(formatExecution(execution, apply ? undefined : dryRunApplyCommand(options)));
+        if (apply) {
+          const disk = await getDiskInfo().catch(() => undefined);
+          const freeSpace =
+            disk !== undefined && disk.containerFree > 0 ? disk.containerFree : undefined;
+          io.stdout(formatRecap(execution.freed, freeSpace));
+        }
         if (execution.results.some((result) => result.status === 'failed')) process.exitCode = 1;
       },
     );
@@ -286,6 +341,7 @@ export function buildProgram(io: IO): Command {
 
   program
     .command('report')
+    .alias('leftovers')
     .description('Write a shareable disk report')
     .option('--markdown', 'print markdown (the default)')
     .option('--json', 'print JSON instead of markdown')
@@ -316,6 +372,67 @@ export function buildProgram(io: IO): Command {
         }
       },
     );
+
+  program
+    .command('run <ruleId>')
+    .description("Run a rule's suggested command yourself (asks before it runs)")
+    .option('--yes', 'skip the confirmation prompt (for scripts)')
+    .option('--root', 'allow commands that need administrator (root) rights')
+    .action(async (ruleId: string, options: { yes?: boolean; root?: boolean }) => {
+      // The rule id is only ever a catalog lookup; the string that runs comes
+      // verbatim from the shipped rules, never from a plan file or user input.
+      const rule = allRules.find((candidate) => candidate.id === ruleId);
+      if (rule === undefined) {
+        program.error(`unknown rule: ${ruleId}`, { exitCode: 1 });
+        return;
+      }
+      if (rule.manualCommand === undefined) {
+        const instead =
+          rule.tier === 3
+            ? `diskwise reports "${rule.id}" but never deletes it (tier 3 is protected)`
+            : `diskwise can clean it itself: diskwise fix --tier ${rule.tier} --rule ${rule.id}`;
+        program.error(`"${rule.id}" has no suggested command to run. ${instead}`, { exitCode: 1 });
+        return;
+      }
+
+      io.stdout(
+        [
+          rule.title,
+          `  $ ${rule.manualCommand}`,
+          `  What it does: ${rule.rationale}`,
+          `  What it costs: ${rule.regeneration}`,
+        ].join('\n') + '\n',
+      );
+
+      if (rule.needsRoot === true && options.root !== true && process.getuid?.() !== 0) {
+        program.error(
+          `"${rule.id}" needs administrator (root) rights and diskwise is not running as root. To allow it, re-run with: diskwise run ${rule.id} --root`,
+          { exitCode: 2 },
+        );
+        return;
+      }
+
+      if (options.yes !== true) {
+        if (!io.isTTY) {
+          program.error(
+            'refusing to run without confirmation: answer the prompt from a terminal, or pass --yes for scripts',
+            { exitCode: 2 },
+          );
+          return;
+        }
+        const answer = await promptImpl.ask('Run this command now? [y/N] ');
+        if (!['y', 'yes'].includes(answer.trim().toLowerCase())) {
+          io.stdout('Cancelled. Nothing was run.\n');
+          return;
+        }
+      }
+
+      const exitCode = await runShell(rule.manualCommand, io);
+      if (exitCode !== 0) {
+        io.stderr(`The command failed (exit code ${exitCode}).\n`);
+        process.exitCode = 1;
+      }
+    });
 
   const rules = program.command('rules').description('Inspect the rule catalog');
 
@@ -350,8 +467,22 @@ export function buildProgram(io: IO): Command {
   registerAppsCommand(program, io);
   registerUiCommand(program, io);
   registerDoctorCommand(program, io);
+  program.commands.find((command) => command.name() === 'ui')?.alias('web');
+  program.commands.find((command) => command.name() === 'doctor')?.alias('check');
 
   return program;
+}
+
+function runShell(command: string, io: IO): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, { shell: true, stdio: ['inherit', 'pipe', 'pipe'] });
+    child.stdout?.setEncoding('utf8');
+    child.stderr?.setEncoding('utf8');
+    child.stdout?.on('data', (chunk: string) => io.stdout(chunk));
+    child.stderr?.on('data', (chunk: string) => io.stderr(chunk));
+    child.on('error', reject);
+    child.on('close', (code) => resolve(code ?? 1));
+  });
 }
 
 async function selectInteractively(io: IO, plan: CleanupPlan): Promise<CleanupPlan> {

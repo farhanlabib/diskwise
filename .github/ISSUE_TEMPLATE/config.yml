@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Report a security issue
-    url: https://github.com/<owner>/diskwise/security/policy
+    url: https://github.com/farhanlabib/diskwise/security/policy
     about: Dangerous rules and safety bugs go through private reporting. See SECURITY.md.

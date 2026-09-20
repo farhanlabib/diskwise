@@ -227,9 +227,9 @@ export const cacheRules: Rule[] = [
       'defaults write com.google.Chrome GenAILocalFoundationalModelSettings -int 1',
     preflight: { processes: ['Google Chrome'] },
     rationale:
-      'The on-device model Chrome downloaded for its built-in AI features; nothing but that optional feature reads it, and browsing, profiles and saved data are untouched.',
+      'The on-device model Chrome downloaded for its built-in AI features; nothing but that optional feature reads it, and browsing, profiles and saved data are untouched. The suggested command disables the on-device AI feature (GenAILocalFoundationalModelSettings) — the only thing that stops Chrome re-downloading the model.',
     regeneration:
-      'Chrome re-downloads the model (roughly 4 GB) the next time the feature is used, unless the GenAILocalFoundationalModelSettings policy above disables it.',
+      'Chrome re-downloads the roughly 4 GB model whenever the feature is used again; deleting the model file is permanent only if the on-device AI feature is disabled first.',
     minBytes: 50e6,
   },
   {

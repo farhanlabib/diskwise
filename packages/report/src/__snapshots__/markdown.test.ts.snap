@@ -64,6 +64,12 @@ Reclaimable: **33.9 GB**
 
 </details>
 
+To stop this coming back, run:
+
+\`\`\`sh
+sudo rm -rf ~/Library/Developer/CoreSimulator/Caches/dyld
+\`\`\`
+
 ## Tier 3 · Protected (report only)
 
 | Item | Size | Why it is safe | Restore cost |

@@ -13,3 +13,6 @@ fixtures/probes/*.local.json
 
 test-results/
 playwright-report/
+
+# Command Code agent state (local only)
+.commandcode/

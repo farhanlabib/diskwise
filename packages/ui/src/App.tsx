@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { CleanupPlan, Finding, Tier } from '@diskwise/core/types';
+import type { BuildAppPlanOptions, CleanupPlan, Finding, Tier } from '@diskwise/core/types';
 import { Sidebar, type NavItem } from './components/Sidebar';
+import { ErrorNote } from './components/ErrorNote';
 import { Toolbar } from './components/Toolbar';
 import { Apps } from './screens/Apps';
 import { Cleanup } from './screens/Cleanup';
@@ -19,11 +20,13 @@ import { getToken, useMock } from './api/client';
 import {
   createAppPlan,
   createPlan,
+  describeError,
   shutdown,
   useAppScan,
   useExecution,
   usePermissions,
   useScan,
+  type DescribedError,
 } from './api/hooks';
 import { cleanupRowsFromAudit, unmeasuredFromAudit } from './lib/derive';
 import { formatBytes } from './lib/format';
@@ -107,19 +110,33 @@ function useTheme(): [Theme, () => void] {
   return [theme, () => setTheme(getTheme() === 'dark' ? 'light' : 'dark')];
 }
 
-function appReviewItems(bundleId: string): Finding[] {
+// What the Apps screen can ask the review sheet to include; mirrors the
+// buildAppPlan switches the server accepts.
+export type AppReviewOptions = Pick<BuildAppPlanOptions, 'includeCleanable' | 'includeOrphanData'>;
+
+function appReviewItems(bundleId: string, opts?: AppReviewOptions): Finding[] {
   const app = apps.find((entry) => entry.bundleId === bundleId);
   if (!app) return [];
+  const includeCleanable = opts?.includeCleanable !== false;
+  const includeOrphanData = opts?.includeOrphanData === true;
   return locationGroups(app)
-    .filter((group) => group.action === 'clean')
+    .filter((group) => {
+      if (group.action === 'clean') return includeCleanable;
+      // Orphaned app data only enters a plan through the explicit Trash flow.
+      if (group.action === 'trash') return includeOrphanData;
+      return false;
+    })
     .map((group) => ({
       ruleId: `app.${app.id}.${group.id}`,
       title: `${app.name} — ${group.name}`,
       category: 'app' as const,
       tier: group.tier,
       rationale: group.note,
-      regeneration: 'Rebuilt by the app the next time it opens.',
-      action: null,
+      regeneration:
+        group.action === 'trash'
+          ? 'Recoverable from the Trash until it is emptied.'
+          : 'Rebuilt by the app the next time it opens.',
+      action: group.action === 'trash' ? ('trash-path' as const) : null,
       needsRoot: false,
       permanentOnly: false,
       matches: [
@@ -143,12 +160,16 @@ export function App() {
   );
   const [reviewPlan, setReviewPlan] = useState<CleanupPlan | null>(null);
   const [activePlan, setActivePlan] = useState<CleanupPlan | null>(null);
+  const [planError, setPlanError] = useState<{
+    described: DescribedError;
+    request: { kind: 'cleanup' } | { kind: 'app'; opts?: AppReviewOptions };
+  } | null>(null);
   const collapsed = useCollapsedSidebar();
 
   const scan = useScan();
   const appScan = useAppScan();
   const execution = useExecution();
-  const permissions = usePermissions();
+  const { status: permissions, error: permissionsError } = usePermissions();
 
   const rows = useMemo(
     () => (scan.audit ? cleanupRowsFromAudit(scan.audit) : []),
@@ -161,7 +182,13 @@ export function App() {
   }, []);
 
   const granted = permissions?.fullDiskAccess === 'granted';
-  const fdaLabel = granted ? 'Granted' : permissions?.fullDiskAccess === 'limited' ? 'Limited' : 'Unknown';
+  const fdaLabel = permissionsError
+    ? 'Check failed'
+    : granted
+      ? 'Granted'
+      : permissions?.fullDiskAccess === 'limited'
+        ? 'Limited'
+        : 'Unknown';
 
   const [bootstrapped, setBootstrapped] = useState(false);
   const invalidLink = !useMock && getToken() === null;
@@ -226,24 +253,47 @@ export function App() {
       return;
     }
     if (!scan.jobId) return;
+    setPlanError(null);
     const tiers = [...new Set(chosen.map((row) => row.tier))].sort() as Tier[];
     const ruleIds = [...new Set(chosen.map((row) => row.ruleId))];
     createPlan(scan.jobId, { tiers, ruleIds })
       .then(setReviewPlan)
-      .catch(() => {});
+      .catch((error: unknown) => {
+        const described = describeError(error);
+        setPlanError({
+          described: {
+            ...described,
+            message: `DiskWise couldn’t prepare the cleanup plan. ${described.message}`,
+          },
+          request: { kind: 'cleanup' },
+        });
+      });
   }, [rows, selected, scan.jobId]);
 
-  const openAppReview = useCallback(() => {
-    if (route.name !== 'apps' || !route.bundleId) return;
-    if (useMock) {
-      setReviewPlan(planFromFindings(appReviewItems(route.bundleId)));
-      return;
-    }
-    if (!appScan.jobId) return;
-    createAppPlan(appScan.jobId, route.bundleId)
-      .then(setReviewPlan)
-      .catch(() => {});
-  }, [route, appScan.jobId]);
+  const openAppReview = useCallback(
+    (opts?: AppReviewOptions) => {
+      if (route.name !== 'apps' || !route.bundleId) return;
+      if (useMock) {
+        setReviewPlan(planFromFindings(appReviewItems(route.bundleId, opts)));
+        return;
+      }
+      if (!appScan.jobId) return;
+      setPlanError(null);
+      createAppPlan(appScan.jobId, route.bundleId, opts)
+        .then(setReviewPlan)
+        .catch((error: unknown) => {
+          const described = describeError(error);
+          setPlanError({
+            described: {
+              ...described,
+              message: `DiskWise couldn’t prepare the plan for this app. ${described.message}`,
+            },
+            request: { kind: 'app', opts },
+          });
+        });
+    },
+    [route, appScan.jobId],
+  );
 
   const confirmPlan = useCallback(
     (plan: CleanupPlan, confirmedRuleIds: string[]) => {
@@ -363,6 +413,20 @@ export function App() {
             </div>
           </>
         )}
+
+        {planError ? (
+          <div className="absolute bottom-[20px] left-1/2 z-10 w-[460px] max-w-[calc(100%-40px)] -translate-x-1/2 rounded-[10px] border border-card-line bg-card px-[16px] py-[12px] shadow-window">
+            <ErrorNote
+              message={planError.described.message}
+              detail={planError.described.detail}
+              onRetry={() => {
+                if (planError.request.kind === 'app') openAppReview(planError.request.opts);
+                else openCleanupReview();
+              }}
+              onDismiss={() => setPlanError(null)}
+            />
+          </div>
+        ) : null}
 
         {reviewPlan ? (
           <Review

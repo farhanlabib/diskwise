@@ -38,7 +38,7 @@ function makeReport(opts: {
       {
         kind: 'caches',
         tier: 0,
-        actionable: true,
+        state: 'cleanable',
         path,
         bytesAllocated: opts.cleanable,
         source: 'generic',
@@ -69,7 +69,7 @@ function makeOrphanReport(opts: {
       {
         kind: 'caches',
         tier: 0,
-        actionable: true,
+        state: 'cleanable',
         path: opts.cachePath,
         bytesAllocated: opts.cleanable,
         source: 'generic',
@@ -77,7 +77,7 @@ function makeOrphanReport(opts: {
       {
         kind: 'app-data',
         tier: 2,
-        actionable: true,
+        state: 'deletableWithConfirmation',
         path: opts.dataPath,
         bytesAllocated: opts.data,
         source: 'generic',
@@ -267,6 +267,34 @@ describe('apps command', () => {
     });
 
     expect(plans[0]?.items.map((i) => i.action)).toEqual(['remove-dir-contents', 'trash-path']);
+    expect(confirmed[0]).toEqual([]);
+  });
+
+  it('plans only caches for an orphan without --include-data and never asks to confirm', async () => {
+    const { cachePath, dataPath } = await orphanDirs();
+    const plans: CleanupPlan[] = [];
+    const confirmed: Array<string[] | undefined> = [];
+    const execute: typeof executePlan = async (plan, opts) => {
+      plans.push(plan);
+      confirmed.push(opts.confirmedRuleIds);
+      return { planId: plan.id, apply: opts.apply, results: [], freed: 0 };
+    };
+    const orphan = makeOrphanReport({
+      bundleId: 'com.old.chatapp',
+      cachePath,
+      dataPath,
+      cleanable: 4096,
+      data: 4096,
+    });
+
+    await withTempHome(async () => {
+      const { run } = harness({ orphans: async () => [orphan], execute }, true);
+      await run(['apps', 'clean', 'com.old.chatapp', '--orphaned']);
+    });
+
+    expect(plans[0]?.items.map((i) => [i.ruleId, i.action])).toEqual([
+      ['app.caches', 'remove-dir-contents'],
+    ]);
     expect(confirmed[0]).toEqual([]);
   });
 

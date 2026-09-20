@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Command } from 'commander';
 import type { DiskInfo, PermissionStatus } from '@diskwise/core/types';
-import type { ToolInfo } from '../../../core/src/sources/tools';
+import type { ToolInfo } from '@diskwise/core';
 import type { IO } from '../program';
 import { registerDoctorCommand, type DoctorDeps } from './doctor';
 

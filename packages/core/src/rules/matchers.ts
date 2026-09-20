@@ -187,21 +187,29 @@ async function runProbe(
   try {
     switch (spec.probe) {
       case 'simctl-runtimes': {
-        const result = await ctx.run('xcrun', ['simctl', 'runtime', 'list', '-j']);
+        const result = await ctx.run('xcrun', ['simctl', 'runtime', 'list', '-j'], {
+          signal: ctx.signal,
+        });
         if (result.exitCode !== 0) return [];
         return parseSimctlRuntimes(result.stdout);
       }
       case 'simctl-devices': {
-        const result = await ctx.run('xcrun', ['simctl', 'list', 'devices', '-j']);
+        const result = await ctx.run('xcrun', ['simctl', 'list', 'devices', '-j'], {
+          signal: ctx.signal,
+        });
         if (result.exitCode !== 0) return [];
         return aggregateUnavailableDevices(parseUnavailableDevices(result.stdout));
       }
       case 'docker-df': {
-        const bin = await resolveBin('docker', { home: ctx.home, run: ctx.run });
+        const bin = await resolveBin('docker', { home: ctx.home });
         if (bin === null) return [];
-        const info = await ctx.run(bin, ['info', '--format', '{{.ServerVersion}}']);
+        const info = await ctx.run(bin, ['info', '--format', '{{.ServerVersion}}'], {
+          signal: ctx.signal,
+        });
         if (info.exitCode !== 0) return [];
-        const df = await ctx.run(bin, ['system', 'df', '-v', '--format', '{{json .}}']);
+        const df = await ctx.run(bin, ['system', 'df', '-v', '--format', '{{json .}}'], {
+          signal: ctx.signal,
+        });
         if (df.exitCode !== 0) return [];
         return dockerDfCandidates(df.stdout);
       }

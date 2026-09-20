@@ -72,6 +72,8 @@ const executionBodySchema = z.object({
 const appPlanBodySchema = z.object({
   appScanJobId: z.string(),
   bundleId: z.string(),
+  includeCleanable: z.boolean().optional(),
+  includeOrphanData: z.boolean().optional(),
 });
 
 class BodyTooLarge extends Error {}
@@ -433,7 +435,10 @@ export async function startServer(opts: StartServerOptions): Promise<ServerHandl
       sendJson(res, 404, { error: 'unknown-bundle-id' });
       return;
     }
-    const plan = await opts.engine.buildAppPlan(report);
+    const plan = await opts.engine.buildAppPlan(report, {
+      includeCleanable: parsed.data.includeCleanable,
+      includeOrphanData: parsed.data.includeOrphanData,
+    });
     storePlan(plan);
     sendJson(res, 200, plan);
   }

@@ -10,7 +10,7 @@ import type {
   RunSummary,
   UndoItemResult,
 } from '@diskwise/core/types';
-import { api, streamJob, useMock } from './client';
+import { ApiError, api, streamJob, useMock } from './client';
 import { createStore } from './store';
 import { audit as mockAudit, history as mockHistory, permissions as mockPermissions } from '../mock/data';
 import { appReportsForMock } from '../mock/api';
@@ -18,6 +18,54 @@ import { appReportsForMock } from '../mock/api';
 function errorText(error: unknown): string {
   if (error instanceof Error) return error.message;
   return String(error);
+}
+
+// Turns raw API failures into user-facing text. Server-provided strings can
+// contain filesystem paths, so they travel as optional "detail" that the UI
+// only reveals when the user asks for it.
+export interface DescribedError {
+  message: string;
+  detail?: string;
+}
+
+const GENERIC_API_MESSAGE = (status: number): string => `Request failed with status ${status}`;
+
+export function describeError(error: unknown): DescribedError {
+  if (error instanceof TypeError) {
+    return {
+      message:
+        'Lost contact with the DiskWise server. Restart it with diskwise ui, then try again.',
+    };
+  }
+  if (error instanceof ApiError) {
+    if (error.status === 401) {
+      return {
+        message: 'This session link isn’t valid any more. Start DiskWise again with diskwise ui.',
+      };
+    }
+    if (error.status === 403) {
+      return {
+        message:
+          'DiskWise doesn’t have permission for that. Grant Full Disk Access in System Settings, then try again.',
+      };
+    }
+    if (error.status === 404) {
+      return {
+        message: 'That item isn’t available any more. Run a fresh scan, then try again.',
+      };
+    }
+    if (error.status === 409) {
+      return { message: 'That data is out of date. Run a fresh scan, then try again.' };
+    }
+    if (error.message && error.message !== GENERIC_API_MESSAGE(error.status)) {
+      return { message: 'DiskWise couldn’t complete that.', detail: error.message };
+    }
+    return {
+      message: `DiskWise couldn’t complete that (error ${error.status}). Try again, and restart diskwise ui if it keeps failing.`,
+    };
+  }
+  if (error instanceof Error) return { message: error.message };
+  return { message: String(error) };
 }
 
 // ---------------------------------------------------------------------------
@@ -196,8 +244,9 @@ export function useAppScan() {
 // ---------------------------------------------------------------------------
 // Permissions
 
-export function usePermissions(): PermissionStatus | null {
+export function usePermissions(): { status: PermissionStatus | null; error: string | null } {
   const [status, setStatus] = useState<PermissionStatus | null>(useMock ? mockPermissions : null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (useMock) return;
@@ -205,17 +254,20 @@ export function usePermissions(): PermissionStatus | null {
     api
       .get<PermissionStatus>('/api/permissions')
       .then((value) => {
-        if (active) setStatus(value);
+        if (active) {
+          setStatus(value);
+          setError(null);
+        }
       })
-      .catch(() => {
-        /* surface nothing; onboarding falls back to defaults */
+      .catch((err) => {
+        if (active) setError(describeError(err).message);
       });
     return () => {
       active = false;
     };
   }, []);
 
-  return status;
+  return { status, error };
 }
 
 // ---------------------------------------------------------------------------
@@ -234,14 +286,19 @@ const mockRuns: RunSummary[] = mockHistory.map((run) => ({
 
 export function useRuns() {
   const [runs, setRuns] = useState<RunSummary[]>(useMock ? mockRuns : []);
+  const [error, setError] = useState<DescribedError | null>(null);
 
   const refresh = useCallback(() => {
     if (useMock) return;
     api
       .get<RunSummary[]>('/api/runs')
-      .then(setRuns)
-      .catch(() => {
-        /* keep the previous list */
+      .then((next) => {
+        setRuns(next);
+        setError(null);
+      })
+      .catch((err) => {
+        // Keep the list already on screen and mark it stale instead of blanking it.
+        setError(describeError(err));
       });
   }, []);
 
@@ -249,7 +306,7 @@ export function useRuns() {
     refresh();
   }, [refresh]);
 
-  return { runs, refresh };
+  return { runs, refresh, error };
 }
 
 export async function undo(runId: string): Promise<UndoItemResult[]> {
@@ -305,11 +362,16 @@ async function runExecution(planId: string, options: RunOptions): Promise<void> 
             results: [...snapshot.results, item],
           }));
         } else if (event.event === 'done') {
+          const executeResult = event.data as ExecuteResult;
           executionStore.update((snapshot) => ({
             ...snapshot,
             state: 'done',
-            result: event.data as ExecuteResult,
+            result: executeResult,
           }));
+          // The run changed the disk, so refresh the scan on our own; the
+          // Overview and Cleanup screens must never need a "Scan again" press
+          // after a cleanup. Dry runs (apply: false) leave the disk untouched.
+          if (executeResult.apply) void startScan();
         } else if (event.event === 'error') {
           executionStore.update((snapshot) => ({
             ...snapshot,
@@ -341,8 +403,17 @@ export function createPlan(scanJobId: string, selection: PlanSelection): Promise
   return api.post<CleanupPlan>('/api/plans', { scanJobId, selection });
 }
 
-export function createAppPlan(appScanJobId: string, bundleId: string): Promise<CleanupPlan> {
-  return api.post<CleanupPlan>('/api/app-plans', { appScanJobId, bundleId });
+export function createAppPlan(
+  appScanJobId: string,
+  bundleId: string,
+  opts?: { includeCleanable?: boolean; includeOrphanData?: boolean },
+): Promise<CleanupPlan> {
+  return api.post<CleanupPlan>('/api/app-plans', {
+    appScanJobId,
+    bundleId,
+    includeCleanable: opts?.includeCleanable,
+    includeOrphanData: opts?.includeOrphanData,
+  });
 }
 
 export async function quitApp(bundleId: string): Promise<void> {

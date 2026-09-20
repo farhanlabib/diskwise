@@ -17,6 +17,7 @@ jobs:
   release:
     name: Publish
     runs-on: macos-15
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v6
@@ -25,17 +26,53 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
           cache: pnpm
+
+      - name: Verify the tag matches the CLI package version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="$(node -p "require('./packages/cli/package.json').version")"
+          if [ "$TAG" != "v$version" ]; then
+            echo "error: tag $TAG does not match packages/cli version $version (expected v$version)" >&2
+            exit 1
+          fi
+
+      # npm refuses to publish over an existing version, so catch that here
+      # instead of after the ~25 minute native helper build.
+      - name: Fail early if this version is already on npm
+        run: |
+          version="$(node -p "require('./packages/cli/package.json').version")"
+          if npm view "diskwise@$version" version >/dev/null 2>&1; then
+            echo "error: diskwise@$version is already published. Bump packages/cli/package.json (and packages/cli/src/version.ts), then tag the new version." >&2
+            exit 1
+          fi
+          echo "diskwise@$version is not on npm yet - proceeding"
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      - run: packages/native-helper/build.sh
+      - name: Build the universal native helper
+        run: DISKWISE_HELPER_RELEASE=1 packages/native-helper/build.sh
+        timeout-minutes: 25
       - run: pnpm -F @diskwise/ui build
       - run: pnpm -F diskwise build
+
+      - name: Verify the helper is a universal binary
+        run: |
+          archs="$(lipo -archs packages/cli/dist/diskwise-helper)"
+          echo "$archs"
+          echo "$archs" | grep -qw arm64
+          echo "$archs" | grep -qw x86_64
       - name: Verify the helper is ad-hoc signed
         run: codesign -dv packages/cli/dist/diskwise-helper 2>&1 | grep -q 'Signature=adhoc'
       - name: Checksum the native helper
         run: shasum -a 256 packages/cli/dist/diskwise-helper > diskwise-helper.sha256
+
+      - name: Pack the tarball, verify its helper and smoke-test it standalone
+        run: scripts/smoke-packed-tarball.sh
+        timeout-minutes: 15
+
       - name: Publish to npm
         run: cd packages/cli && npm publish --provenance --access public
         env:

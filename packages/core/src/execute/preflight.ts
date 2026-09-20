@@ -38,7 +38,7 @@ export async function checkPreflight(
   }
 
   if (pf.daemons?.includes('docker')) {
-    const docker = await resolveBin('docker', { run });
+    const docker = await resolveBin('docker');
     if (docker) {
       const result = await run(docker, ['info', '--format', '{{.ServerVersion}}']);
       if (result.exitCode === 0) blockers.push('Docker is running');

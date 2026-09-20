@@ -122,9 +122,11 @@ async function measureCandidate(
   });
 
   let bytesReclaimable: number | undefined;
-  if (clone) {
+  if (clone && !opts.signal?.aborted) {
     try {
-      const native = await clone.limit(() => clone.tree(targetPath, { skip }));
+      const native = await clone.limit(() =>
+        clone.tree(targetPath, { skip, ...(opts.signal ? { signal: opts.signal } : {}) }),
+      );
       bytesReclaimable = Math.min(native.privateSize, walk.allocated);
     } catch {
       // Any native failure leaves reclaimable undefined so callers fall back
@@ -216,6 +218,7 @@ export async function scan(
       const candidates = await runRuleMatcher(rule, ctx);
       const matches: Match[] = [];
       for (const c of candidates) {
+        if (opts.signal?.aborted) return;
         const m = await measureCandidate(c, seen, { ...opts, home }, clone);
         if (m.unreadable) unreadable.push(...m.unreadable);
         matches.push(m);

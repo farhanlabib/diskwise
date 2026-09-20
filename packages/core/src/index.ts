@@ -35,5 +35,6 @@ export { analyzeSystemData } from './sources/system-data';
 export { detectHostApp } from './sources/host-app';
 export { detectTools, type ToolInfo } from './sources/tools';
 export { findOrphanedAppData } from './apps/orphans';
+export { appLocationState } from './apps/state';
 export { appProfiles, profileForBundleId } from './apps/profiles';
 export { lintProfile, lintProfiles } from './apps/profiles/lint';

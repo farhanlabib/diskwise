@@ -4,7 +4,8 @@ import { history as mockHistory } from '../mock/data';
 import type { HistoryRun } from '../mock/types';
 import { formatBytes } from '../lib/format';
 import { useMock } from '../api/client';
-import { undo, useRuns } from '../api/hooks';
+import { describeError, undo, useRuns, type DescribedError } from '../api/hooks';
+import { ErrorNote } from '../components/ErrorNote';
 import { historyFromRuns } from '../lib/derive';
 
 interface RunAction {
@@ -43,6 +44,7 @@ const UNDO_LABEL: Record<UndoItemResult['status'], string> = {
   'not-restorable': 'Not restorable',
   'missing-from-trash': 'Missing from Trash',
   'destination-exists': 'Destination exists',
+  'unknown-outcome': 'Outcome unknown',
   failed: 'Failed',
 };
 
@@ -113,22 +115,31 @@ function MockHistory() {
 }
 
 function LiveHistory() {
-  const { runs, refresh } = useRuns();
+  const { runs, refresh, error } = useRuns();
   const items = useMemo(() => historyFromRuns(runs), [runs]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [undoResults, setUndoResults] = useState<Record<string, UndoItemResult[]>>({});
+  const [undoErrors, setUndoErrors] = useState<Record<string, DescribedError>>({});
 
   const onUndo = useCallback(
     (runId: string) => {
       setBusy(runId);
       setExpandedId(runId);
+      setUndoErrors((current) => {
+        if (!(runId in current)) return current;
+        const next = { ...current };
+        delete next[runId];
+        return next;
+      });
       undo(runId)
         .then((results) => {
           setUndoResults((current) => ({ ...current, [runId]: results }));
           refresh();
         })
-        .catch(() => {})
+        .catch((err) => {
+          setUndoErrors((current) => ({ ...current, [runId]: describeError(err) }));
+        })
         .finally(() => setBusy(null));
     },
     [refresh],
@@ -136,12 +147,27 @@ function LiveHistory() {
 
   return (
     <HistoryShell>
-      {items.length === 0 ? (
+      {error ? (
+        <div className="rounded-[10px] border border-card-line bg-card px-[18px] py-[14px]">
+          <ErrorNote
+            message={`Couldn’t refresh the run list. ${error.message}`}
+            detail={error.detail}
+            hint={
+              items.length > 0
+                ? 'Showing runs from the last successful refresh; they may be out of date.'
+                : undefined
+            }
+            onRetry={refresh}
+          />
+        </div>
+      ) : null}
+      {!error && items.length === 0 ? (
         <div className="text-[12.5px] text-text3">No cleanup runs yet.</div>
       ) : null}
       {items.map((run: HistoryRun) => {
         const summary = runs.find((entry) => entry.runId === run.id);
         const results = undoResults[run.id];
+        const undoError = undoErrors[run.id];
         const expanded = expandedId === run.id;
         return (
           <div key={run.id} className="rounded-[10px] border border-card-line bg-card px-[18px] py-[16px]">
@@ -176,6 +202,15 @@ function LiveHistory() {
                   restorable
                   {summary?.incomplete ? ' · Run incomplete' : ''}
                 </div>
+                {undoError ? (
+                  <div className="py-[6px]">
+                    <ErrorNote
+                      message={`Undo failed. ${undoError.message}`}
+                      detail={undoError.detail}
+                      hint="Items already restored stay restored — check the list before trying again."
+                    />
+                  </div>
+                ) : null}
                 {results ? (
                   results.map((result) => (
                     <div key={result.itemId} className="flex items-center gap-[12px] py-[7px]">

@@ -1,5 +1,11 @@
 # diskwise
 
+[![CI](https://github.com/farhanlabib/diskwise/actions/workflows/ci.yml/badge.svg)](https://github.com/farhanlabib/diskwise/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/diskwise)](https://www.npmjs.com/package/diskwise)
+[![npm downloads](https://img.shields.io/npm/dm/diskwise)](https://www.npmjs.com/package/diskwise)
+[![licence: MIT](https://img.shields.io/npm/l/diskwise)](./LICENSE)
+![macOS 14+ | Node 22+](https://img.shields.io/badge/macOS_14%2B_%7C_Node_22%2B-lightgrey)
+
 diskwise is an open-source macOS disk cleanup tool that **explains where your space went** and **only deletes what is provably safe**.
 
 macOS reports a vague "System Data" bucket that swallows tens of gigabytes with no explanation. Generic cleaners either show _where_ the space is without explaining _what it is_, or delete aggressively with weak rationale. diskwise's product is the reasoning, not the deletion.
@@ -45,9 +51,14 @@ Tier 3 is a feature, not a gap: it is how diskwise explains swap, `/private/var/
 ## Install
 
 ```sh
-# Try it without installing anything:
-npx diskwise audit          # no install
+# Run it without installing anything:
+npx diskwise audit
+
+# Or install globally:
 npm i -g diskwise          # then just: diskwise audit
+
+# Or with Homebrew (the tap ships with the first tagged release):
+brew install farhanlabib/tap/diskwise
 
 # Build from source (Node 22+ and Xcode Command Line Tools):
 pnpm install
@@ -55,12 +66,9 @@ packages/native-helper/build.sh
 pnpm -F @diskwise/ui build
 pnpm -F diskwise build
 node packages/cli/dist/index.js audit
-
-# Homebrew tap (coming with v0.1.0):
-brew install <owner>/tap/diskwise
 ```
 
-Requirements: macOS 14 Sonoma or later, on Apple Silicon or Intel, with Node.js 20+.
+Requirements: macOS 14 Sonoma or later, on Apple Silicon or Intel, with Node.js 22+.
 
 ## Usage
 
@@ -78,6 +86,7 @@ diskwise clean --tier 0 --apply
 diskwise apps clean slack --apply      # clean one app's caches, logs and saved state (never app data)
 diskwise clean --plan plan.json --apply
 diskwise clean --interactive           # per-item prompts
+diskwise clean --tier 2 --apply --permanent  # Tier 2 permanently instead of Trash; typed phrase per rule
 diskwise undo --last
 diskwise history
 diskwise rules list | rules show <id>
@@ -87,10 +96,12 @@ diskwise ui [--port 0] [--no-open]    # start the local web UI on 127.0.0.1 and 
 
 `diskwise clean` is a dry run by default. It prints a plan and exits; nothing is deleted without `--apply`.
 
+Tier 2 items always go to the Trash. Permanent deletion exists only in the CLI: `clean --apply --permanent` asks you to type a phrase per rule and refuses to run without an interactive terminal. The web UI can apply the same plans with in-browser confirmations, but it never deletes permanently — every Tier 2 action there is a Trash move.
+
 ## Privacy
 
 - **No telemetry. Ever.**
-- **No outbound network calls at all.** Updates come through npm or Homebrew; there is no in-app update check. This is enforced by lint rules that ban the network modules, and by tests that run the CLI and UI with outbound connections blocked.
+- **No outbound network calls at all.** Updates come through npm or Homebrew; there is no in-app update check. This is enforced by lint rules that ban the network modules, by an integration test that runs the CLI tool detection and the local UI server while every outbound connection attempt is blocked and recorded, and by a scan of the packaged UI assets for external scripts, styles, fonts, images, and API URLs. No step spawns a shell — not even tool discovery.
 - The web UI listens on `127.0.0.1` only, uses a per-session token, and shuts down with the CLI process.
 - `diskwise report --markdown --redact` rewrites your home folder, hostnames, and volume names before you share a report.
 
@@ -108,11 +119,18 @@ So there is no `.app`. `diskwise ui` runs inside the CLI process and **reuses yo
 
 ## Status
 
-**Early development.** v0.1 (the audit-only walking skeleton) is in progress. There is no execution path yet: `clean` is dry-run only until v0.2. Expect rough edges.
+**v0.2.0.** Everything in the usage list ships: audit, plan, clean with `--apply`, journaling with `undo` and `history`, report, rules, doctor, per-app cleaning, and the local web UI. The newest areas are still experimental: the web UI and orphaned-app-data detection (`apps --orphans`). Expect rough edges.
+
+## Releases
+
+Merging a pull request into `main` runs CI only. A `vX.Y.Z` tag publishes the CLI to npm and updates the Homebrew tap; [docs/development.md](./docs/development.md) and [packaging/README.md](./packaging/README.md) have the details.
 
 ## Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for the rule and app-profile walkthroughs. Safety reports go through [SECURITY.md](./SECURITY.md).
+- Rule and app-profile walkthroughs: [CONTRIBUTING.md](./CONTRIBUTING.md)
+- Code of conduct: [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
+- Security reports: [SECURITY.md](./SECURITY.md)
+- Issues: templates under [.github/ISSUE_TEMPLATE/](./.github/ISSUE_TEMPLATE/)
 
 ## License
 

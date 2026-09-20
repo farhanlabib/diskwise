@@ -6,7 +6,8 @@ import { apps as mockApps, locationGroups } from '../mock/data';
 import type { AppEntry, AppLocationGroup } from '../mock/types';
 import { formatBytes } from '../lib/format';
 import { useMock } from '../api/client';
-import { quitApp, useAppScan } from '../api/hooks';
+import { describeError, quitApp, useAppScan, type DescribedError } from '../api/hooks';
+import { ErrorNote } from '../components/ErrorNote';
 import { appGroupsFromReport, appsFromReports } from '../lib/derive';
 
 const FILTERS = [
@@ -29,6 +30,12 @@ function lastUsedRank(app: AppEntry): number {
   return Number.parseInt(app.lastUsed, 10) || 0;
 }
 
+// Mirrors the buildAppPlan switches the server accepts for /api/app-plans.
+type AppReviewOptions = {
+  includeCleanable?: boolean;
+  includeOrphanData?: boolean;
+};
+
 export function Apps({
   appId,
   onNavigate,
@@ -36,12 +43,13 @@ export function Apps({
 }: {
   appId?: string;
   onNavigate: (hash: string) => void;
-  onOpenReview: () => void;
+  onOpenReview: (opts?: AppReviewOptions) => void;
 }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('All');
   const [sortKey, setSortKey] = useState<SortKey>('caches');
   const [quitIds, setQuitIds] = useState<string[]>([]);
+  const [quitErrors, setQuitErrors] = useState<Record<string, DescribedError>>({});
   const [highlight, setHighlight] = useState(0);
 
   const appScan = useAppScan();
@@ -130,6 +138,10 @@ export function Apps({
     const groups = groupsFor(selectedApp);
     const cleanable = groups.filter((group) => group.action === 'clean');
     const cleanBytes = cleanable.reduce((sum, group) => sum + group.sizeBytes, 0);
+    const trashBytes = groups
+      .filter((group) => group.action === 'trash')
+      .reduce((sum, group) => sum + group.sizeBytes, 0);
+    const quitError = quitErrors[selectedApp.id];
 
     return (
       <div className="flex-1 overflow-y-auto p-0">
@@ -189,17 +201,30 @@ export function Apps({
             ))}
           </div>
 
-          <div className="mt-[22px] flex items-center gap-[12px]">
+          <div className="mt-[22px] flex flex-wrap items-center gap-[12px]">
             {running ? (
               <>
                 <button
                   type="button"
                   onClick={() => {
                     setQuitIds((ids) => [...ids, selectedApp.id]);
+                    setQuitErrors((current) => {
+                      if (!(selectedApp.id in current)) return current;
+                      const next = { ...current };
+                      delete next[selectedApp.id];
+                      return next;
+                    });
                     if (!useMock) {
                       void quitApp(selectedApp.bundleId)
                         .then(() => appScan.start())
-                        .catch(() => {});
+                        .catch((error: unknown) => {
+                          // The quit didn't happen, so undo the optimistic state.
+                          setQuitIds((ids) => ids.filter((id) => id !== selectedApp.id));
+                          setQuitErrors((current) => ({
+                            ...current,
+                            [selectedApp.id]: describeError(error),
+                          }));
+                        });
                     }
                   }}
                   className="cursor-pointer rounded-[8px] border-none bg-accent px-[20px] py-[11px] text-[13.5px] [font-weight:600] text-accent-fg"
@@ -210,18 +235,48 @@ export function Apps({
                   Caches can't be cleaned while the app is running.
                 </span>
               </>
-            ) : cleanBytes > 0 ? (
-              <button
-                type="button"
-                onClick={onOpenReview}
-                className="cursor-pointer rounded-[8px] border-none bg-accent px-[20px] py-[11px] text-[13.5px] [font-weight:600] text-accent-fg"
-              >
-                Clean caches · {formatBytes(cleanBytes)}
-              </button>
             ) : (
-              <span className="text-[12px] text-text2">No cleanable caches for this app.</span>
+              <>
+                {cleanBytes > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => onOpenReview()}
+                    className="cursor-pointer rounded-[8px] border-none bg-accent px-[20px] py-[11px] text-[13.5px] [font-weight:600] text-accent-fg"
+                  >
+                    Clean caches · {formatBytes(cleanBytes)}
+                  </button>
+                ) : (
+                  <span className="text-[12px] text-text2">No cleanable caches for this app.</span>
+                )}
+                {trashBytes > 0 ? (
+                  <>
+                    <button
+                      type="button"
+                      data-testid="app-trash-data"
+                      onClick={() =>
+                        onOpenReview({ includeCleanable: false, includeOrphanData: true })
+                      }
+                      className="cursor-pointer rounded-[8px] border border-card-line bg-card px-[20px] py-[11px] text-[13.5px] [font-weight:600] text-text"
+                    >
+                      Move app data to Trash · {formatBytes(trashBytes)}
+                    </button>
+                    <span className="text-[12px] text-text2">
+                      App data is never cleaned like a cache — it goes to the Trash, so you can
+                      undo.
+                    </span>
+                  </>
+                ) : null}
+              </>
             )}
           </div>
+          {quitError ? (
+            <div className="mt-[12px]">
+              <ErrorNote
+                message={`DiskWise couldn’t quit ${selectedApp.name}. ${quitError.message}`}
+                detail={quitError.detail}
+              />
+            </div>
+          ) : null}
         </div>
       </div>
     );

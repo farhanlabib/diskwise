@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CleanupPlan, PlanItem, Tier } from '@diskwise/core/types';
 import { TierBadge } from '../components/TierBadge';
 import { TypedConfirmField } from '../components/TypedConfirmField';
@@ -33,6 +33,11 @@ export function Review({
   onConfirm: (confirmedRuleIds: string[]) => void;
 }) {
   const [confirmValues, setConfirmValues] = useState<Record<string, string>>({});
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    panelRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -55,10 +60,19 @@ export function Review({
   const allConfirmed = confirmRules.every(
     (ruleId) => (confirmValues[ruleId] ?? '').trim() === ruleId,
   );
+  const trashOnly =
+    plan.items.length > 0 && plan.items.every((item) => item.action === 'trash-path');
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,0.35)] p-[40px] backdrop-blur-[2px]">
-      <div className="flex max-h-full w-full max-w-[560px] flex-col overflow-hidden rounded-[12px] bg-win shadow-window">
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Review plan"
+        tabIndex={-1}
+        className="flex max-h-full w-full max-w-[560px] flex-col overflow-hidden rounded-[12px] bg-win shadow-window outline-none"
+      >
         <div className="px-[26px] pt-[22px] pb-[14px]">
           <div className="text-[19px] [font-weight:660] tracking-[-0.02em]">Review plan</div>
           <div className="mt-[3px] text-[12.5px] text-text2">
@@ -114,7 +128,7 @@ export function Review({
               color: allConfirmed ? 'var(--accent-fg)' : 'var(--text3)',
             }}
           >
-            Clean {formatBytes(plan.totals.total)}
+            {trashOnly ? 'Move to Trash' : 'Clean'} {formatBytes(plan.totals.total)}
           </button>
         </div>
       </div>

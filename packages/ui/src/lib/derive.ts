@@ -137,9 +137,6 @@ function lastUsedLabel(iso: string | undefined, now: number): string {
 export function appsFromReports(reports: AppReport[], now: number = Date.now()): AppEntry[] {
   return reports.map((report) => {
     const { app } = report;
-    const cleanable = report.locations
-      .filter((location) => location.actionable)
-      .reduce((sum, location) => sum + location.bytesAllocated, 0);
     return {
       id: app.bundleId,
       name: app.name,
@@ -150,7 +147,9 @@ export function appsFromReports(reports: AppReport[], now: number = Date.now()):
       running: app.running,
       orphan: report.orphaned === true,
       knownProfile: report.profileId !== undefined,
-      cachesBytes: cleanable,
+      // Totals are classified once in core (AppLocation.state); the UI must not
+      // re-derive them or orphaned app data would leak back into the cache total.
+      cachesBytes: report.totals.cleanable,
       appDataBytes: report.totals.data,
       totalBytes: report.totals.all,
       color: colorFor(app.bundleId),
@@ -168,7 +167,8 @@ const LOCATION_NAMES: Record<AppLocationKind, string> = {
 };
 
 function locationAction(location: AppLocation): AppLocationAction {
-  if (location.actionable) return 'clean';
+  if (location.state === 'cleanable') return 'clean';
+  if (location.state === 'deletableWithConfirmation') return 'trash';
   if (location.kind === 'sign-in-data') return 'report';
   if (location.kind === 'app-data') return 'finder';
   return 'protected';
@@ -182,9 +182,11 @@ export function appGroupsFromReport(report: AppReport): AppLocationGroup[] {
     tier: location.tier,
     note:
       location.note ??
-      (location.actionable
+      (location.state === 'cleanable'
         ? `${report.app.name} rebuilds these the next time it opens. You stay signed in.`
-        : `Report only — ${location.path}`),
+        : location.state === 'deletableWithConfirmation'
+          ? `Left behind by ${report.app.name}. Never cleaned like a cache — you move it to the Trash and can undo that.`
+          : `Report only — ${location.path}`),
     action: locationAction(location),
   }));
 }

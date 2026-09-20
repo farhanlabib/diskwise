@@ -1,7 +1,15 @@
 import { lstat } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { AppLocation, AppLocationKind, AppProfile, InstalledApp, Tier } from '../types';
+import type {
+  AppLocation,
+  AppLocationKind,
+  AppLocationState,
+  AppProfile,
+  InstalledApp,
+  Tier,
+} from '../types';
 import { profileForBundleId } from './profiles';
+import { appLocationState } from './state';
 
 export const CHROMIUM_CACHE_DIRS: string[] = [
   'Cache',
@@ -21,19 +29,19 @@ export const CHROMIUM_CACHE_DIRS: string[] = [
 interface LocationSpec {
   kind: AppLocationKind;
   tier: Tier;
-  actionable: boolean;
+  state: AppLocationState;
   path: string;
   source: AppLocation['source'];
   note?: string;
 }
 
-const KIND_META: Record<AppLocationKind, { tier: Tier; actionable: boolean }> = {
-  caches: { tier: 0, actionable: true },
-  logs: { tier: 1, actionable: true },
-  'saved-state': { tier: 1, actionable: true },
-  'sign-in-data': { tier: 2, actionable: false },
-  'app-data': { tier: 2, actionable: false },
-  settings: { tier: 3, actionable: false },
+const KIND_META: Record<AppLocationKind, { tier: Tier }> = {
+  caches: { tier: 0 },
+  logs: { tier: 1 },
+  'saved-state': { tier: 1 },
+  'sign-in-data': { tier: 2 },
+  'app-data': { tier: 2 },
+  settings: { tier: 3 },
 };
 
 // Defends against a plist value turning a home-relative path into a traversal or
@@ -70,7 +78,7 @@ async function resolveProfileCaches(profile: AppProfile, home: string): Promise<
     const spec: LocationSpec = {
       kind: 'caches',
       tier: cache.tier,
-      actionable: true,
+      state: 'cleanable',
       path,
       source: 'profile',
     };
@@ -93,10 +101,17 @@ export async function resolveAppLocations(
 
   const add = (kind: AppLocationKind, path: string): void => {
     const meta = KIND_META[kind];
-    candidates.push({ kind, tier: meta.tier, actionable: meta.actionable, path, source: 'generic' });
+    candidates.push({
+      kind,
+      tier: meta.tier,
+      // Installed apps: their own app data and settings are report-only.
+      state: appLocationState(kind, meta.tier, false),
+      path,
+      source: 'generic',
+    });
   };
 
-  // caches (tier 0, actionable)
+  // caches (tier 0, cleanable)
   add('caches', join(lib, 'Caches', bundleId));
   for (const dir of CHROMIUM_CACHE_DIRS) add('caches', join(appSupport, name, dir));
   for (const dir of CHROMIUM_CACHE_DIRS) add('caches', join(appSupport, bundleId, dir));
@@ -106,25 +121,25 @@ export async function resolveAppLocations(
     add('caches', join(lib, 'Containers', bundleId, 'Data', 'Library', 'Caches'));
   }
 
-  // logs (tier 1, actionable)
+  // logs (tier 1, cleanable)
   add('logs', join(lib, 'Logs', name));
   add('logs', join(lib, 'Logs', bundleId));
 
-  // saved-state (tier 1, actionable)
+  // saved-state (tier 1, cleanable)
   add('saved-state', join(lib, 'Saved Application State', `${bundleId}.savedState`));
 
-  // sign-in-data (tier 2, not actionable)
+  // sign-in-data (tier 2, report-only)
   add('sign-in-data', join(lib, 'HTTPStorages', bundleId));
   add('sign-in-data', join(lib, 'HTTPStorages', `${bundleId}.binarycookies`));
   add('sign-in-data', join(lib, 'Cookies', `${bundleId}.binarycookies`));
   add('sign-in-data', join(lib, 'WebKit', bundleId));
 
-  // app-data (tier 2, not actionable)
+  // app-data (tier 2, report-only)
   add('app-data', join(appSupport, name));
   add('app-data', join(appSupport, bundleId));
   if (opts.fullDiskAccess) add('app-data', join(lib, 'Containers', bundleId));
 
-  // settings (tier 3, not actionable)
+  // settings (tier 3, report-only)
   add('settings', join(lib, 'Preferences', `${bundleId}.plist`));
 
   let ordered = candidates;
@@ -136,7 +151,7 @@ export async function resolveAppLocations(
     for (const candidate of candidates) {
       if (candidate.kind !== 'caches') continue;
       if (protect.some((entry) => isAtOrInside(candidate.path, entry))) {
-        candidate.actionable = false;
+        candidate.state = 'reportOnly';
       }
     }
 

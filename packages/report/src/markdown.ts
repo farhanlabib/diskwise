@@ -86,6 +86,15 @@ export function formatMarkdown(result: AuditResult, opts: { version?: string } =
       lines.push('');
       lines.push('</details>');
       lines.push('');
+
+      if (finding.action !== null && finding.manualCommand !== undefined) {
+        lines.push('To stop this coming back, run:');
+        lines.push('');
+        lines.push('```sh');
+        lines.push(finding.manualCommand);
+        lines.push('```');
+        lines.push('');
+      }
     }
   }
 

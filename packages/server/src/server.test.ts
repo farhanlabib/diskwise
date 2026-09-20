@@ -177,7 +177,7 @@ const APP_REPORT: AppReport = {
     {
       kind: 'caches',
       tier: 0,
-      actionable: true,
+      state: 'cleanable',
       path: '/tmp/example/caches',
       bytesAllocated: 100,
       source: 'generic',
@@ -556,6 +556,42 @@ describe('scan and plan flow', () => {
       headers: authHeaders(handle.token),
     });
     expect(res.status).toBe(404);
+  });
+
+  it('ends a cancelled scan job in state cancelled', async () => {
+    const engine = makeEngine();
+    const handle = await start(engine);
+    engine.holdScan();
+    const scan = await request(handle.port, {
+      method: 'POST',
+      path: '/api/scans',
+      headers: jsonHeaders(handle.token),
+      body: '{}',
+    });
+    expect(scan.status).toBe(200);
+    const { jobId } = JSON.parse(scan.text) as { jobId: string };
+
+    const cancel = await request(handle.port, {
+      method: 'POST',
+      path: `/api/jobs/${jobId}/cancel`,
+      headers: jsonHeaders(handle.token),
+      body: '{}',
+    });
+    expect(cancel.status).toBe(200);
+
+    engine.releaseScan();
+
+    let state = 'running';
+    for (let attempt = 0; attempt < 50 && state === 'running'; attempt += 1) {
+      const detail = await request(handle.port, {
+        path: `/api/jobs/${jobId}`,
+        headers: authHeaders(handle.token),
+      });
+      state = (JSON.parse(detail.text) as { state: string }).state;
+      if (state !== 'running') break;
+      await new Promise((resolveWait) => setTimeout(resolveWait, 20));
+    }
+    expect(state).toBe('cancelled');
   });
 
   it('refuses to plan an unknown or unfinished scan', async () => {

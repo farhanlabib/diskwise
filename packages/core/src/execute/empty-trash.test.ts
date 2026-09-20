@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { allRules } from '../rules/catalog';
 import type { CleanupPlan, Match, PlanItem, ProbeRunner } from '../types';
 import { executePlan } from './execute';
 
@@ -20,23 +21,27 @@ afterAll(async () => {
 
 const run: ProbeRunner = async () => ({ stdout: '', stderr: '', exitCode: 0 });
 
+const RULE = allRules.find((rule) => rule.id === 'trash.empty');
+
 async function matchFor(target: string): Promise<Match> {
   const st = await fs.lstat(target);
   const kind = st.isDirectory() ? 'dir' : st.isFile() ? 'file' : 'virtual';
   return { kind, path: target, detail: '', bytesAllocated: st.size, bytesApparent: st.size, dev: st.dev, ino: st.ino };
 }
 
+// Builds the item exactly the way buildPlan would for the trash.empty rule.
 async function itemFor(target: string, over: Partial<PlanItem> = {}): Promise<PlanItem> {
+  if (RULE === undefined || RULE.action === null) throw new Error('trash.empty rule missing');
   return {
     id: 'trash.empty#0',
     ruleId: 'trash.empty',
-    title: 'Empty the Trash',
-    category: 'user-data',
-    tier: 2,
-    action: 'empty-trash',
-    permanentOnly: true,
+    title: RULE.title,
+    category: RULE.category,
+    tier: RULE.tier,
+    action: RULE.action,
+    permanentOnly: RULE.permanentOnly ?? false,
     needsConfirmation: true,
-    roots: [target],
+    roots: RULE.roots,
     match: await matchFor(target),
     ...over,
   };
@@ -90,6 +95,17 @@ describe('empty-trash action', () => {
     expect((await fs.readdir(trash)).sort()).toEqual(['a.txt', 'dir']);
   });
 
+  it('rejects a plan that disables the confirmation for emptying the Trash', async () => {
+    const { home, trash } = await makeHome('home-tamper');
+
+    const item = await itemFor(trash, { needsConfirmation: false });
+
+    await expect(executePlan(planOf([item]), { apply: true, home, run })).rejects.toThrow(
+      /records needsConfirmation false but rule "trash\.empty" now uses true/,
+    );
+    expect((await fs.readdir(trash)).sort()).toEqual(['a.txt', 'dir']);
+  });
+
   it('refuses a path outside ~/.Trash and leaves the folder untouched', async () => {
     const home = path.join(base, 'home3');
     const documents = path.join(home, 'Documents');
@@ -103,8 +119,8 @@ describe('empty-trash action', () => {
       confirmedRuleIds: ['trash.empty'],
     });
 
-    expect(result.results[0]?.status).toBe('failed');
-    expect(result.results[0]?.reason).toBe('empty-trash only applies to ~/.Trash');
+    expect(result.results[0]?.status).toBe('skipped');
+    expect(result.results[0]?.reason).toBe('refused: OUTSIDE_ROOTS');
     expect(await fs.readdir(documents)).toEqual(['keep.txt']);
   });
 
@@ -115,14 +131,29 @@ describe('empty-trash action', () => {
     await fs.writeFile(path.join(real, 'a.txt'), 'a');
     await fs.symlink(real, path.join(home, '.Trash'));
 
-    const result = await executePlan(planOf([await itemFor(path.join(home, '.Trash'))]), {
+    const link = path.join(home, '.Trash');
+    const st = await fs.lstat(link);
+    // Recorded as a plain dir, but the symlink resolves outside the rule root,
+    // so the root containment check refuses it before the identity check runs.
+    const match: Match = {
+      kind: 'dir',
+      path: link,
+      dev: st.dev,
+      ino: st.ino,
+      detail: '',
+      bytesAllocated: st.size,
+      bytesApparent: st.size,
+    };
+
+    const result = await executePlan(planOf([await itemFor(link, { match })]), {
       apply: true,
       home,
       run,
       confirmedRuleIds: ['trash.empty'],
     });
 
-    expect(result.results[0]?.status).toBe('failed');
+    expect(result.results[0]?.status).toBe('skipped');
+    expect(result.results[0]?.reason).toBe('refused: OUTSIDE_ROOTS');
     expect(await fs.readdir(real)).toEqual(['a.txt']);
   });
 });

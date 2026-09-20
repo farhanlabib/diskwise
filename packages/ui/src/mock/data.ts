@@ -450,9 +450,9 @@ export const apps: AppEntry[] = [
     running: false,
     orphan: true,
     knownProfile: false,
-    cachesBytes: 400 * MB,
-    appDataBytes: 0,
-    totalBytes: 400 * MB,
+    cachesBytes: 464 * MB,
+    appDataBytes: 1.2 * GB,
+    totalBytes: 464 * MB + 1.2 * GB,
     color: '#8a8a90',
   },
 ];
@@ -523,6 +523,14 @@ export function locationGroups(app: AppEntry): AppLocationGroup[] {
         tier: 1,
         note: 'Diagnostic history from an app that is no longer installed.',
         action: 'clean',
+      },
+      {
+        id: 'appdata',
+        name: 'App data',
+        sizeBytes: app.appDataBytes,
+        tier: 2,
+        note: 'User data left behind by the uninstalled app. Never cleaned like a cache — you move it to the Trash and can undo that.',
+        action: 'trash',
       },
     ];
   }
@@ -623,5 +631,5 @@ export const RUN_FREED = 20.8 * GB;
 
 export const serverInfo = {
   address: '127.0.0.1:52814',
-  uptime: '4m 12s',
+  version: '0.2.0',
 };

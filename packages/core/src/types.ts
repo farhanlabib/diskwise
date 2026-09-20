@@ -186,12 +186,15 @@ export interface ProbeResult {
   stdout: string;
   stderr: string;
   exitCode: number;
+  // True when the run was aborted through the caller's signal. Distinct from a
+  // timeout (exit 124), a missing binary (127) and a normal command failure.
+  cancelled?: boolean;
 }
 
 export type ProbeRunner = (
   bin: string,
   args: string[],
-  opts?: { timeoutMs?: number; env?: Record<string, string> },
+  opts?: { timeoutMs?: number; env?: Record<string, string>; signal?: AbortSignal },
 ) => Promise<ProbeResult>;
 
 export interface MatcherContext {
@@ -267,6 +270,9 @@ export interface CleanupPlan {
   auditGeneratedAt: string;
   items: PlanItem[];
   manual: ManualStep[];
+  // Commands carried by actionable findings (e.g. disabling the Chrome feature
+  // that would re-download a deleted model): prevention, not cleanup steps.
+  prevention?: ManualStep[];
   totals: { byTier: Record<Tier, number>; total: number };
 }
 
@@ -275,6 +281,19 @@ export interface PlanSelection {
   categories?: Category[];
   ruleIds?: string[];
   itemIds?: string[];
+}
+
+// Options for buildAppPlan (packages/core/src/apps/plan.ts).
+export interface BuildAppPlanOptions {
+  id?: string;
+  now?: Date;
+  // Plan the orphaned app-data locations (state deletableWithConfirmation) as
+  // trash-path items. They are never planned without this explicit opt-in, and
+  // execution still requires typing their rule id back (needsConfirmation).
+  includeOrphanData?: boolean;
+  // Plan the cleanable cache/log/saved-state items. Default: true. Turned off
+  // by the standalone "Move app data to Trash" flow, which must not mix the two.
+  includeCleanable?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -328,6 +347,9 @@ export interface ExecuteResult {
 export type JournalRecord =
   | { type: 'run-start'; runId: string; planId: string; at: string; apply: boolean; itemCount: number }
   | { type: 'intent'; runId: string; at: string; itemId: string; ruleId: string; action: ActionId; path?: string }
+  // Written straight after a Trash move so the destination survives a crash
+  // before the result record: an intent plus this record can still be undone.
+  | { type: 'trash-destination'; runId: string; at: string; itemId: string; trashedPath: string }
   | { type: 'result'; runId: string; at: string; result: ItemResult }
   | { type: 'run-end'; runId: string; at: string; freed: number }
   | { type: 'undo'; runId: string; at: string; itemId: string; restoredPath: string };
@@ -354,7 +376,15 @@ export interface RunSummary {
 export interface UndoItemResult {
   itemId: string;
   path?: string;
-  status: 'restored' | 'not-restorable' | 'missing-from-trash' | 'destination-exists' | 'failed';
+  // `unknown-outcome` is an item whose run stopped mid-action, so diskwise
+  // cannot tell whether the action happened or where the data went.
+  status:
+    | 'restored'
+    | 'not-restorable'
+    | 'missing-from-trash'
+    | 'destination-exists'
+    | 'unknown-outcome'
+    | 'failed';
   reason?: string;
 }
 
@@ -369,11 +399,22 @@ export type AppLocationKind =
   | 'app-data'
   | 'settings';
 
+// Three-state actionability model for one app location:
+// - cleanable: Tier 0/1 cache, log or saved-state. Counted in totals.cleanable
+//   and planned without confirmation.
+// - deletableWithConfirmation: user data that may be trashed, but only after an
+//   explicit opt-in and typed confirmation. Never counted in totals.cleanable.
+// - reportOnly: never planned (sign-in data, settings, and the app data of
+//   installed apps).
+export type AppLocationState =
+  | 'cleanable'
+  | 'deletableWithConfirmation'
+  | 'reportOnly';
+
 export interface AppLocation {
   kind: AppLocationKind;
   tier: Tier;
-  // Only caches/logs/saved-state are ever actionable.
-  actionable: boolean;
+  state: AppLocationState;
   path: string;
   bytesAllocated: number;
   source: 'profile' | 'generic';

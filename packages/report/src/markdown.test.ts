@@ -35,4 +35,21 @@ describe('formatMarkdown', () => {
   it('includes a details block for match listings', () => {
     expect(formatMarkdown(sampleAudit)).toContain('<details><summary>Items</summary>');
   });
+
+  it('renders a prevention block for actionable findings with a suggested command', () => {
+    const result: AuditResult = structuredClone(sampleAudit);
+    result.findings[0]!.manualCommand =
+      'defaults write com.google.Chrome GenAILocalFoundationalModelSettings -int 1';
+    const out = formatMarkdown(result);
+    expect(out).toContain('To stop this coming back, run:');
+    expect(out).toContain(
+      '```sh\ndefaults write com.google.Chrome GenAILocalFoundationalModelSettings -int 1\n```',
+    );
+  });
+
+  it('does not render a prevention block for action-less findings', () => {
+    const result: AuditResult = structuredClone(sampleAudit);
+    result.findings[4]!.manualCommand = 'sudo pmset -a hibernatemode 0';
+    expect(formatMarkdown(result)).not.toContain('sudo pmset -a hibernatemode 0');
+  });
 });

@@ -126,6 +126,30 @@ describe('measure', () => {
     expect(r.aborted).toBe(true);
   });
 
+  it('stops mid-walk when the signal aborts', async () => {
+    const root = await makeRoot('abort-mid');
+    const writes: Array<Promise<unknown>> = [];
+    for (let i = 0; i < 50; i += 1) {
+      const dir = join(root, `d${i}`);
+      await mkdir(dir);
+      for (let j = 0; j < 40; j += 1) writes.push(writeFile(join(dir, `f${j}.bin`), 'x'));
+    }
+    await Promise.all(writes);
+
+    const seen = new Set<string>();
+    const controller = new AbortController();
+    const pending = measure(root, { signal: controller.signal, seen });
+    // Abort once the walk is demonstrably underway, not before it starts.
+    while (seen.size < 50) await new Promise((resolveWait) => setTimeout(resolveWait, 1));
+    controller.abort();
+
+    const r = await pending;
+
+    expect(r.aborted).toBe(true);
+    // 1 root + 50 dirs + 2000 files; stopping mid-walk must miss some of them.
+    expect(r.entries).toBeLessThan(2051);
+  });
+
   it('dedupes across walks that share a seen set', async () => {
     const root = await makeRoot('seen');
     await writeFile(join(root, 'a.bin'), Buffer.alloc(MB, 5));

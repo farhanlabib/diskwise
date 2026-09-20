@@ -35,3 +35,11 @@
 @keyframes skel { 0%{opacity:0.4} 50%{opacity:0.75} 100%{opacity:0.4} }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes barfill { from { transform: scaleX(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

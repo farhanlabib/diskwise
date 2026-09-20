@@ -1,6 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { lstat } from 'node:fs/promises';
-import type { ActionId, AppLocation, AppReport, CleanupPlan, PlanItem, Tier } from '../types';
+import type {
+  ActionId,
+  AppLocation,
+  AppReport,
+  BuildAppPlanOptions,
+  CleanupPlan,
+  PlanItem,
+  Tier,
+} from '../types';
 
 const LABELS: Record<AppLocation['kind'], string> = {
   caches: 'Caches',
@@ -11,31 +19,31 @@ const LABELS: Record<AppLocation['kind'], string> = {
   settings: 'Settings',
 };
 
-// Cache and log folders are emptied but kept (some apps misbehave when they vanish);
-// a saved-state bundle is removed whole and macOS recreates it.
-function actionFor(location: AppLocation): ActionId | null {
-  if (!location.actionable || location.tier > 1) return null;
-  return location.kind === 'saved-state' ? 'remove-path' : 'remove-dir-contents';
-}
-
 export async function buildAppPlan(
   report: AppReport,
-  opts: { id?: string; now?: Date; includeOrphanData?: boolean } = {},
+  opts: BuildAppPlanOptions = {},
 ): Promise<CleanupPlan> {
   const { app } = report;
   const orphaned = report.orphaned === true;
   const items: PlanItem[] = [];
   const byTier: Record<Tier, number> = { 0: 0, 1: 0, 2: 0, 3: 0 };
   for (const location of report.locations) {
-    // Orphaned app data is otherwise tier 2 (report-only); with the opt-in it is
-    // trashed as a unit and gated behind a typed confirmation.
-    const orphanData =
-      orphaned &&
-      opts.includeOrphanData === true &&
-      location.kind === 'app-data' &&
-      location.tier === 2;
-    const action = orphanData ? 'trash-path' : actionFor(location);
-    if (!action) continue;
+    if (location.state === 'cleanable') {
+      if (opts.includeCleanable === false) continue;
+    } else if (location.state === 'deletableWithConfirmation') {
+      if (opts.includeOrphanData !== true) continue;
+    } else {
+      continue;
+    }
+    // Cache and log folders are emptied but kept (some apps misbehave when they
+    // vanish); a saved-state bundle is removed whole and macOS recreates it.
+    // Orphaned app data is trashed as a unit so undo can restore it.
+    const orphanData = location.state === 'deletableWithConfirmation';
+    const action: ActionId = orphanData
+      ? 'trash-path'
+      : location.kind === 'saved-state'
+        ? 'remove-path'
+        : 'remove-dir-contents';
     let st;
     try {
       st = await lstat(location.path);

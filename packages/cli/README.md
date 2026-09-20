@@ -1,5 +1,11 @@
 # diskwise
 
+[![CI](https://github.com/farhanlabib/diskwise/actions/workflows/ci.yml/badge.svg)](https://github.com/farhanlabib/diskwise/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/diskwise)](https://www.npmjs.com/package/diskwise)
+[![npm downloads](https://img.shields.io/npm/dm/diskwise)](https://www.npmjs.com/package/diskwise)
+[![licence: MIT](https://img.shields.io/npm/l/diskwise)](./LICENSE)
+![macOS 14+ | Node 22+](https://img.shields.io/badge/macOS_14%2B_%7C_Node_22%2B-lightgrey)
+
 **Explains where your Mac's disk space went — and only deletes what is provably safe.**
 
 macOS reports a vague "System Data" bucket that swallows tens of gigabytes with no explanation. diskwise decomposes it into named, sized, explained buckets, reports honest allocated bytes (never apparent bytes), and tiers every action with a stated cost: why it is safe, and what it costs to get back.
@@ -10,7 +16,7 @@ diskwise's product is the reasoning, not the deletion. `clean` is a dry run unle
 npx diskwise audit   # or: npm i -g diskwise && diskwise audit
 ```
 
-Requires macOS 14 Sonoma or later, on Apple Silicon or Intel, with Node.js 20+.
+Requires macOS 14 Sonoma or later, on Apple Silicon or Intel, with Node.js 22+.
 
 ## Commands
 
@@ -19,18 +25,34 @@ diskwise audit                         # full report, decomposed, with tiers
 diskwise audit --json                  # machine-readable, versioned schema
 diskwise audit --explain               # teaching mode: what "System Data" really is
 diskwise audit --category dev|system|browser|app|user-data|os-leftovers
-diskwise doctor                        # xcode/docker/brew/node versions, Full Disk Access status
+diskwise doctor                        # xcode/docker/brew/node/... versions, Full Disk Access status
+diskwise apps                          # installed apps sorted by reclaimable cache
+diskwise apps show <name|bundleId>     # one app: caches, logs, data, sign-in data, running state
+diskwise apps --orphans                # data left behind by uninstalled apps
 diskwise plan --tier 0,1 [-o plan.json]
-diskwise clean --tier 0 --apply        # dry run by default; nothing is deleted without --apply
+diskwise clean --tier 0 --apply
+diskwise apps clean slack --apply      # clean one app's caches, logs and saved state (never app data)
 diskwise clean --plan plan.json --apply
 diskwise clean --interactive           # per-item prompts
-diskwise undo --last                   # restore the last run's Trash moves
-diskwise history                       # browse past runs
-diskwise apps                          # installed apps sorted by reclaimable cache
-diskwise apps clean slack --apply      # one app's caches/logs/saved state — never app data
-diskwise report --redact               # shareable report, no usernames or hostnames
-diskwise ui                            # local web UI on 127.0.0.1, opened in your browser
+diskwise clean --tier 2 --apply --permanent  # Tier 2 permanently instead of Trash; typed phrase per rule
+diskwise undo --last
+diskwise history
+diskwise rules list | rules show <id>
+diskwise report --markdown --redact > disk-report.md
+diskwise ui [--port 0] [--no-open]    # start the local web UI on 127.0.0.1 and open the browser
 ```
+
+`diskwise clean` is a dry run by default. It prints a plan and exits; nothing is deleted without `--apply`.
+
+Tier 2 items always go to the Trash. Permanent deletion exists only in the CLI: `clean --apply --permanent` asks you to type a phrase per rule and refuses to run without an interactive terminal. The web UI can apply the same plans with in-browser confirmations, but it never deletes permanently — every Tier 2 action there is a Trash move.
+
+## Status
+
+**v0.2.0.** Everything in the command list ships: audit, plan, clean with `--apply`, journaling with `undo` and `history`, report, rules, doctor, per-app cleaning, and the local web UI. The newest areas are still experimental: the web UI and orphaned-app-data detection (`apps --orphans`). Expect rough edges.
+
+## Releases
+
+Merging a pull request into `main` runs CI only. A `vX.Y.Z` tag publishes the CLI to npm and updates the Homebrew tap; [docs/development.md](https://github.com/farhanlabib/diskwise/blob/main/docs/development.md) and [packaging/README.md](https://github.com/farhanlabib/diskwise/blob/main/packaging/README.md) have the details.
 
 ## Safety tiers
 

@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { allRules } from '../rules/catalog';
 import type { CleanupPlan, Match, PlanItem, ProbeRunner } from '../types';
 import { executePlan } from './execute';
 
@@ -32,7 +33,11 @@ function makeTrash(): { trash: Trash; calls: string[] } {
   return { trash, calls };
 }
 
-const run: ProbeRunner = async () => ({ stdout: '', stderr: '', exitCode: 0 });
+// ios.backups preflights on AppleMobileDeviceHelper; report it as not running.
+const run: ProbeRunner = async (bin) =>
+  bin === 'pgrep' ? { stdout: '', stderr: '', exitCode: 1 } : { stdout: '', stderr: '', exitCode: 0 };
+
+const RULE = allRules.find((rule) => rule.id === 'ios.backups');
 
 async function matchFor(target: string): Promise<Match> {
   const st = await fs.lstat(target);
@@ -47,18 +52,21 @@ async function matchFor(target: string): Promise<Match> {
   };
 }
 
-async function itemFor(target: string, over: Partial<PlanItem> = {}): Promise<PlanItem> {
+// Builds the item exactly the way buildPlan would for the ios.backups rule.
+function itemFor(target: string, over: Partial<PlanItem> = {}): PlanItem {
+  if (RULE === undefined || RULE.action === null) throw new Error('ios.backups rule missing');
   return {
-    id: `${over.ruleId ?? 'rule'}#0`,
-    ruleId: 'test-rule',
-    title: 'test item',
-    category: 'user-data',
-    tier: 2,
-    action: 'trash-path',
-    permanentOnly: false,
+    id: `${RULE.id}#0`,
+    ruleId: RULE.id,
+    title: RULE.title,
+    category: RULE.category,
+    tier: RULE.tier,
+    action: RULE.action,
+    permanentOnly: RULE.permanentOnly ?? false,
     needsConfirmation: true,
-    roots: [base],
-    match: await matchFor(target),
+    ...(RULE.preflight !== undefined ? { preflight: RULE.preflight } : {}),
+    roots: RULE.roots,
+    match: {} as Match,
     ...over,
   };
 }
@@ -84,17 +92,19 @@ async function exists(p: string): Promise<boolean> {
     );
 }
 
-async function makeDir(name: string): Promise<string> {
-  const dir = path.join(base, name);
-  await fs.mkdir(dir);
+async function makeTarget(name: string): Promise<PlanItem> {
+  if (RULE === undefined) throw new Error('ios.backups rule missing');
+  const root = RULE.roots[0] ?? '/';
+  const dir = path.join(base, root.slice(1), name);
+  await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(path.join(dir, 'f.bin'), Buffer.alloc(4096, 1));
-  return dir;
+  return { ...itemFor(dir), match: await matchFor(dir) };
 }
 
 describe('executePlan --permanent', () => {
   it('deletes a confirmed tier 2 item for good without touching the trash', async () => {
-    const target = await makeDir('caseA');
-    const item = await itemFor(target, { ruleId: 'user-data.rule-a' });
+    const item = await makeTarget('caseA');
+    const target = item.match.path ?? '';
     const { trash, calls } = makeTrash();
 
     const result = await executePlan(planOf([item]), {
@@ -102,8 +112,8 @@ describe('executePlan --permanent', () => {
       home: base,
       run,
       trash,
-      confirmedRuleIds: ['user-data.rule-a'],
-      permanentRuleIds: ['user-data.rule-a'],
+      confirmedRuleIds: ['ios.backups'],
+      permanentRuleIds: ['ios.backups'],
     });
 
     expect(result.results[0]?.status).toBe('done');
@@ -113,8 +123,8 @@ describe('executePlan --permanent', () => {
   });
 
   it('skips a permanent rule that was not typed back', async () => {
-    const target = await makeDir('caseB');
-    const item = await itemFor(target, { ruleId: 'user-data.rule-b' });
+    const item = await makeTarget('caseB');
+    const target = item.match.path ?? '';
     const { trash, calls } = makeTrash();
 
     const result = await executePlan(planOf([item]), {
@@ -122,7 +132,7 @@ describe('executePlan --permanent', () => {
       home: base,
       run,
       trash,
-      permanentRuleIds: ['user-data.rule-b'],
+      permanentRuleIds: ['ios.backups'],
     });
 
     expect(result.results[0]?.status).toBe('skipped');
@@ -132,8 +142,8 @@ describe('executePlan --permanent', () => {
   });
 
   it('uses the trash when the rule is not in permanentRuleIds', async () => {
-    const target = await makeDir('caseC');
-    const item = await itemFor(target, { ruleId: 'user-data.rule-c' });
+    const item = await makeTarget('caseC');
+    const target = item.match.path ?? '';
     const { trash, calls } = makeTrash();
 
     const result = await executePlan(planOf([item]), {
@@ -141,7 +151,7 @@ describe('executePlan --permanent', () => {
       home: base,
       run,
       trash,
-      confirmedRuleIds: ['user-data.rule-c'],
+      confirmedRuleIds: ['ios.backups'],
       permanentRuleIds: [],
     });
 
@@ -151,29 +161,28 @@ describe('executePlan --permanent', () => {
     expect(calls).toEqual([target]);
   });
 
-  it('ignores the flag for a tier 1 item and trashes it', async () => {
-    const target = await makeDir('caseD');
-    const item = await itemFor(target, { ruleId: 'user-data.rule-d', tier: 1 });
-    const { trash, calls } = makeTrash();
+  it('rejects a plan that downgrades the tier to dodge permanent handling', async () => {
+    const item = await makeTarget('caseD');
+    const target = item.match.path ?? '';
+    const downgraded: PlanItem = { ...item, tier: 1, needsConfirmation: false };
+    const { trash } = makeTrash();
 
-    const result = await executePlan(planOf([item]), {
-      apply: true,
-      home: base,
-      run,
-      trash,
-      confirmedRuleIds: ['user-data.rule-d'],
-      permanentRuleIds: ['user-data.rule-d'],
-    });
-
-    expect(result.results[0]?.status).toBe('done');
-    expect(result.results[0]?.restorable).toBe(true);
-    expect(await exists(target)).toBe(false);
-    expect(calls).toEqual([target]);
+    await expect(
+      executePlan(planOf([downgraded]), {
+        apply: true,
+        home: base,
+        run,
+        trash,
+        confirmedRuleIds: ['ios.backups'],
+        permanentRuleIds: ['ios.backups'],
+      }),
+    ).rejects.toThrow(/records tier 1 but rule "ios\.backups" now uses 2/);
+    expect(await exists(target)).toBe(true);
   });
 
   it('leaves a dry run with permanent untouched', async () => {
-    const target = await makeDir('caseE');
-    const item = await itemFor(target, { ruleId: 'user-data.rule-e' });
+    const item = await makeTarget('caseE');
+    const target = item.match.path ?? '';
     const { trash, calls } = makeTrash();
 
     const result = await executePlan(planOf([item]), {
@@ -181,8 +190,8 @@ describe('executePlan --permanent', () => {
       home: base,
       run,
       trash,
-      confirmedRuleIds: ['user-data.rule-e'],
-      permanentRuleIds: ['user-data.rule-e'],
+      confirmedRuleIds: ['ios.backups'],
+      permanentRuleIds: ['ios.backups'],
     });
 
     expect(result.results[0]?.status).toBe('dry-run');
@@ -191,14 +200,10 @@ describe('executePlan --permanent', () => {
   });
 
   it('refuses a permanent target outside its roots', async () => {
-    const roots = path.join(base, 'caseF-roots');
-    await fs.mkdir(roots);
     const outside = path.join(base, 'caseF-outside');
-    await fs.mkdir(outside);
     const target = path.join(outside, 'x');
-    await fs.mkdir(target);
-
-    const item = await itemFor(target, { ruleId: 'user-data.rule-f', roots: [roots] });
+    await fs.mkdir(target, { recursive: true });
+    const item = itemFor(target, { match: await matchFor(target) });
     const { trash, calls } = makeTrash();
 
     const result = await executePlan(planOf([item]), {
@@ -206,8 +211,8 @@ describe('executePlan --permanent', () => {
       home: base,
       run,
       trash,
-      confirmedRuleIds: ['user-data.rule-f'],
-      permanentRuleIds: ['user-data.rule-f'],
+      confirmedRuleIds: ['ios.backups'],
+      permanentRuleIds: ['ios.backups'],
     });
 
     expect(result.results[0]?.status).toBe('skipped');

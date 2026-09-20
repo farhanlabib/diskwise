@@ -3,7 +3,7 @@ import type { CleanupPlan, ItemStatus } from '@diskwise/core/types';
 import { runItems as mockPlanItems } from '../mock/data';
 import type { RunItem } from '../mock/types';
 import { useMock } from '../api/client';
-import { useExecution } from '../api/hooks';
+import { useExecution, useScan } from '../api/hooks';
 import { formatBytes } from '../lib/format';
 
 type DisplayStatus = 'queued' | 'running' | 'done' | 'skipped' | 'failed';
@@ -127,6 +127,44 @@ function MockRunning({ onNavigate }: { onNavigate: (hash: string) => void }) {
   );
 }
 
+// Outcome of the storage refresh that starts automatically once a run
+// completes. Freed bytes come from the execution result; free space only
+// appears once the refreshed scan has produced new disk info.
+function ScanRefreshNote() {
+  const { state, audit, error } = useScan();
+
+  if (state === 'running') {
+    return (
+      <div className="mt-[14px] flex items-center gap-[8px] text-[13.5px] text-text2">
+        <span
+          className="h-[14px] w-[14px] rounded-full border-[2.5px] border-border"
+          style={{ borderTopColor: 'var(--accent)', animation: 'spin 0.8s linear infinite' }}
+        />
+        Recalculating storage…
+      </div>
+    );
+  }
+  if (state === 'failed') {
+    return (
+      <div className="mt-[14px]">
+        <div className="text-[13.5px] text-text2">
+          DiskWise couldn’t recalculate the storage numbers, so everything above is still from
+          before this run.
+        </div>
+        {error ? <div className="mt-[8px] font-mono text-[12px] text-text3">{error}</div> : null}
+      </div>
+    );
+  }
+  if (state === 'done' && audit?.disk) {
+    return (
+      <div className="mt-[14px] text-[13.5px] text-text2">
+        Free space is now {formatBytes(audit.disk.containerFree)}.
+      </div>
+    );
+  }
+  return null;
+}
+
 function LiveRunning({ plan, onNavigate }: { plan: CleanupPlan; onNavigate: (hash: string) => void }) {
   const { state, results, result, error } = useExecution();
   const resultsById = new Map(results.map((entry) => [entry.itemId, entry]));
@@ -165,6 +203,7 @@ function LiveRunning({ plan, onNavigate }: { plan: CleanupPlan; onNavigate: (has
             Planned {formatBytes(plan.totals.total)}. Some space frees up gradually — sparse files
             shrink over the next few minutes.
           </div>
+          <ScanRefreshNote />
           <div className="mt-[24px] flex flex-col gap-[8px]">
             {results.map((entry) => (
               <div

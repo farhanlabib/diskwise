@@ -16,7 +16,7 @@ export interface AppEntry {
   color: string;
 }
 
-export type AppLocationAction = 'clean' | 'report' | 'finder' | 'protected';
+export type AppLocationAction = 'clean' | 'trash' | 'report' | 'finder' | 'protected';
 
 export interface AppLocationGroup {
   id: string;

@@ -4,7 +4,7 @@ import { usePermissions } from '../api/hooks';
 
 export function Onboarding({ onNavigate }: { onNavigate: (hash: string) => void }) {
   const [copied, setCopied] = useState(false);
-  const permissions = usePermissions();
+  const { status: permissions } = usePermissions();
   const hostApp = permissions?.hostApp ?? 'Terminal';
   const granted = permissions?.fullDiskAccess === 'granted';
 

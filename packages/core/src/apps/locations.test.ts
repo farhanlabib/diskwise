@@ -62,7 +62,7 @@ afterAll(async () => {
 const chat = { bundleId: 'com.test.chat', name: 'Chat' };
 
 describe('resolveAppLocations', () => {
-  it('reports kinds, tiers and actionable flags in order', async () => {
+  it('reports kinds, tiers and states in order', async () => {
     const home = await makeHome();
     await seedChat(home);
 
@@ -71,18 +71,20 @@ describe('resolveAppLocations', () => {
     const kinds = locations.map((l) => l.kind);
     expect(kinds).toEqual(['caches', 'caches', 'logs', 'sign-in-data', 'app-data', 'settings']);
 
-    const byKind = new Map<AppLocationKind, { tier: number; actionable: boolean }>();
+    const byKind = new Map<AppLocationKind, { tier: number; state: string }>();
     for (const location of locations) byKind.set(location.kind, location);
 
-    expect(byKind.get('caches')).toMatchObject({ tier: 0, actionable: true });
-    expect(byKind.get('logs')).toMatchObject({ tier: 1, actionable: true });
-    expect(byKind.get('sign-in-data')).toMatchObject({ tier: 2, actionable: false });
-    expect(byKind.get('app-data')).toMatchObject({ tier: 2, actionable: false });
-    expect(byKind.get('settings')).toMatchObject({ tier: 3, actionable: false });
+    expect(byKind.get('caches')).toMatchObject({ tier: 0, state: 'cleanable' });
+    expect(byKind.get('logs')).toMatchObject({ tier: 1, state: 'cleanable' });
+    expect(byKind.get('sign-in-data')).toMatchObject({ tier: 2, state: 'reportOnly' });
+    expect(byKind.get('app-data')).toMatchObject({ tier: 2, state: 'reportOnly' });
+    expect(byKind.get('settings')).toMatchObject({ tier: 3, state: 'reportOnly' });
 
     for (const location of locations) {
       const cleanableKinds: AppLocationKind[] = ['caches', 'logs', 'saved-state'];
-      expect(location.actionable).toBe(cleanableKinds.includes(location.kind));
+      expect(location.state).toBe(
+        cleanableKinds.includes(location.kind) ? 'cleanable' : 'reportOnly',
+      );
       expect(location.source).toBe('generic');
     }
 
@@ -108,10 +110,20 @@ describe('resolveAppLocations', () => {
     const containerRoot = join(home, 'Library/Containers/com.test.chat');
 
     expect(full).toContainEqual(
-      expect.objectContaining({ kind: 'caches', tier: 0, actionable: true, path: containerCache }),
+      expect.objectContaining({
+        kind: 'caches',
+        tier: 0,
+        state: 'cleanable',
+        path: containerCache,
+      }),
     );
     expect(full).toContainEqual(
-      expect.objectContaining({ kind: 'app-data', tier: 2, actionable: false, path: containerRoot }),
+      expect.objectContaining({
+        kind: 'app-data',
+        tier: 2,
+        state: 'reportOnly',
+        path: containerRoot,
+      }),
     );
 
     // cache path comes before app-data, which is what keeps the shared `seen`
@@ -179,7 +191,7 @@ describe('resolveAppLocations with app profiles', () => {
     expect(profileCache).toMatchObject({
       kind: 'caches',
       tier: 1,
-      actionable: true,
+      state: 'cleanable',
       path: join(cacheRoot, 'Data'),
     });
     expect(profileCache?.note).toContain('Offline');
@@ -192,7 +204,7 @@ describe('resolveAppLocations with app profiles', () => {
     expect(caches).toEqual([cacheRoot, join(cacheRoot, 'Data')]);
   });
 
-  it('marks a generic cache inside a protected path as non-actionable', async () => {
+  it('marks a generic cache inside a protected path as report-only', async () => {
     const home = await makeHome();
     const cacheRoot = join(home, 'Library/Caches/com.test.protected');
     await writeSizedFile(join(cacheRoot, 'f.bin'), MB);
@@ -206,7 +218,7 @@ describe('resolveAppLocations with app profiles', () => {
       expect.objectContaining({
         kind: 'caches',
         path: cacheRoot,
-        actionable: false,
+        state: 'reportOnly',
         source: 'generic',
       }),
     );

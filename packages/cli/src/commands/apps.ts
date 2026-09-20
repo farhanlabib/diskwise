@@ -8,11 +8,16 @@ import {
   defaultJournalDir,
   defaultLockPath,
   executePlan,
+  findOrphanedAppData,
   listInstalledApps,
   openJournal,
 } from '@diskwise/core';
-import type { AppLocationKind, AppReport, ItemResult } from '@diskwise/core/types';
-import { findOrphanedAppData } from '../../../core/src/apps/orphans';
+import type {
+  AppLocationKind,
+  AppLocationState,
+  AppReport,
+  ItemResult,
+} from '@diskwise/core/types';
 import { promptImpl } from '../prompt';
 import type { IO } from '../program';
 
@@ -26,6 +31,12 @@ const KIND_LABELS: Record<AppLocationKind, string> = {
   'sign-in-data': 'Sign-in & site data',
   'app-data': 'App data',
   settings: 'Settings',
+};
+
+const STATE_LABELS: Record<AppLocationState, string> = {
+  cleanable: 'cleanable',
+  deletableWithConfirmation: 'app data — moved to Trash only with clean --include-data',
+  reportOnly: 'report only',
 };
 
 function appTable(rows: AppReport[]): string {
@@ -45,22 +56,14 @@ function appTable(rows: AppReport[]): string {
   return `${all.map(format).join('\n')}\n`;
 }
 
-const CLEANABLE_KINDS: AppLocationKind[] = ['caches', 'logs', 'saved-state'];
-
 function orphanTable(rows: AppReport[]): string {
   const header = ['BUNDLE ID', 'CLEANABLE', 'DATA', 'TOTAL'];
-  const body = rows.map((report) => {
-    const cleanable = report.locations
-      .filter((location) => CLEANABLE_KINDS.includes(location.kind))
-      .reduce((sum, location) => sum + location.bytesAllocated, 0);
-    const data = report.totals.all - cleanable;
-    return [
-      report.app.bundleId,
-      formatBytes(cleanable),
-      formatBytes(data),
-      formatBytes(report.totals.all),
-    ];
-  });
+  const body = rows.map((report) => [
+    report.app.bundleId,
+    formatBytes(report.totals.cleanable),
+    formatBytes(report.totals.data),
+    formatBytes(report.totals.all),
+  ]);
   const all = [header, ...body];
   const widths = header.map((_, index) => Math.max(...all.map((row) => row[index]!.length)));
   const format = (row: string[]): string =>
@@ -167,7 +170,7 @@ export function registerAppsCommand(
       ];
       for (const location of report.locations) {
         lines.push(
-          `  ${KIND_LABELS[location.kind]}  tier ${location.tier}  ${formatBytes(location.bytesAllocated)}  ${location.path}  ${location.actionable ? 'cleanable' : 'report only'}`,
+          `  ${KIND_LABELS[location.kind]}  tier ${location.tier}  ${formatBytes(location.bytesAllocated)}  ${location.path}  ${STATE_LABELS[location.state]}`,
         );
       }
       io.stdout(`${lines.join('\n')}\n`);

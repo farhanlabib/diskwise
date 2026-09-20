@@ -1,0 +1,11 @@
+# Default owner for everything.
+* @farhanlabib
+
+# Safety-critical: casual changes here can cause data loss.
+/packages/core/src/safety/ @farhanlabib
+/packages/core/src/rules/catalog/ @farhanlabib
+/packages/core/src/execute/ @farhanlabib
+
+# CI and packaging.
+/.github/workflows/ @farhanlabib
+/packaging/ @farhanlabib

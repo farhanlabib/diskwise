@@ -2,20 +2,20 @@ import { constants } from 'node:fs';
 import { access } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import type { ProbeRunner } from '../types';
-import { runProbe } from './run';
 
 // A probe with a bare PATH (e.g. from a GUI app) still needs to find the tools
-// the user installed, so we check the usual install prefixes first and only
-// fall back to asking a login shell when nothing on disk matches.
-const VALID_NAME = /^[a-z0-9._-]+$/i;
+// the user installed, so we check the usual install prefixes before the
+// inherited PATH. Resolution never spawns a shell: startup files could have
+// side effects, and the safety checklist forbids shells outright.
+const KNOWN_DIRS = [
+  '/opt/homebrew/bin',
+  '/usr/local/bin',
+  '/usr/bin',
+  '/bin',
+];
 
-function knownDirs(home: string): string[] {
+function homeDirs(home: string): string[] {
   return [
-    '/opt/homebrew/bin',
-    '/usr/local/bin',
-    '/usr/bin',
-    '/bin',
     `${home}/.local/bin`,
     `${home}/.cargo/bin`,
     `${home}/go/bin`,
@@ -28,8 +28,8 @@ const cache = new Map<string, string | null>();
 
 export interface ResolveBinDeps {
   home?: string;
+  pathEnv?: string;
   exists?: (p: string) => Promise<boolean>;
-  run?: ProbeRunner;
 }
 
 export async function resolveBin(name: string, deps: ResolveBinDeps = {}): Promise<string | null> {
@@ -44,32 +44,18 @@ export async function resolveBin(name: string, deps: ResolveBinDeps = {}): Promi
         () => true,
         () => false,
       ));
-  const run = deps.run ?? runProbe;
 
-  for (const dir of knownDirs(home)) {
+  const pathEnv = deps.pathEnv ?? process.env.PATH ?? '';
+  const dirs = [...KNOWN_DIRS, ...homeDirs(home), ...pathEnv.split(':')];
+  const seen = new Set<string>();
+
+  for (const dir of dirs) {
+    if (dir.length === 0 || seen.has(dir)) continue;
+    seen.add(dir);
     const candidate = join(dir, name);
     if (await exists(candidate)) {
       cache.set(name, candidate);
       return candidate;
-    }
-  }
-
-  // Never interpolate an arbitrary name into a shell command.
-  if (!VALID_NAME.test(name)) {
-    cache.set(name, null);
-    return null;
-  }
-
-  const shell = process.env.SHELL ?? '/bin/zsh';
-  const result = await run(shell, ['-ilc', `command -v ${name}`]);
-  if (result.exitCode === 0) {
-    const line = result.stdout
-      .split('\n')
-      .map((l) => l.trim())
-      .find((l) => l.startsWith('/'));
-    if (line) {
-      cache.set(name, line);
-      return line;
     }
   }
 

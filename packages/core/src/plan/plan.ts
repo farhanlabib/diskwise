@@ -39,6 +39,8 @@ export function buildPlan(
 
   const items: PlanItem[] = [];
   const manual: ManualStep[] = [];
+  // A command on an actionable finding is prevention guidance, not a cleanup step.
+  const prevention: ManualStep[] = [];
   const counters = new Map<string, number>();
 
   for (const finding of audit.findings) {
@@ -56,6 +58,15 @@ export function buildPlan(
         });
       }
       continue;
+    }
+
+    if (finding.manualCommand !== undefined) {
+      prevention.push({
+        ruleId: finding.ruleId,
+        title: finding.title,
+        command: finding.manualCommand,
+        bytes: finding.totals.allocated,
+      });
     }
 
     for (const match of finding.matches) {
@@ -93,6 +104,7 @@ export function buildPlan(
     auditGeneratedAt: audit.generatedAt,
     items: selected,
     manual,
+    prevention,
     totals: { byTier, total },
   };
 }

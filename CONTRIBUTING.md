@@ -83,7 +83,8 @@ Every pull request that touches rules, profiles, safety, execution, or the serve
 - [ ] Preflight is declared for anything that must not run (app, Docker daemon, booted simulator).
 - [ ] The change adds or updates a fixture test, and `pnpm test` passes.
 - [ ] Nothing added imports or calls `http`, `https`, `net`, `dgram`, `undici`, `tls`, or `fetch` outside `packages/server` (loopback only).
-- [ ] No shell is spawned: `execFile` with argv arrays only.
+- [ ] `packages/server/src/no-network.test.ts` passes: no outbound connection attempts during the CLI and UI flows, and no external URLs in the packaged UI assets.
+- [ ] No shell is spawned: `execFile` with argv arrays only, and binary resolution (`packages/core/src/probes/bin-resolver.ts`) checks known prefixes and the inherited `PATH` — never a login or interactive shell.
 
 ## Commit style
 

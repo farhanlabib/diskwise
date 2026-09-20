@@ -102,4 +102,107 @@ describe('undoRun', () => {
     expect(second.some((entry) => entry.itemId === 'item-1')).toBe(false);
     expect(await readFile(orig1, 'utf8')).toBe('hello');
   });
+
+  it('recovers an interrupted Trash move from its destination record', async () => {
+    const dir = await makeDir();
+    const trash = join(dir, 'trash');
+    await mkdir(trash);
+
+    const orig = join(dir, 'orig.txt');
+    const trashed = join(trash, 'orig.txt');
+    await writeFile(orig, 'hello');
+    await rename(orig, trashed);
+
+    const runId = 'run-recover';
+    const records: JournalRecord[] = [
+      {
+        type: 'run-start',
+        runId,
+        planId: 'plan-r',
+        at: '2026-01-01T00:00:00.000Z',
+        apply: true,
+        itemCount: 1,
+      },
+      {
+        type: 'intent',
+        runId,
+        at: '2026-01-01T00:00:01.000Z',
+        itemId: 'item-1',
+        ruleId: 'ios.backups',
+        action: 'trash-path',
+        path: orig,
+      },
+      {
+        type: 'trash-destination',
+        runId,
+        at: '2026-01-01T00:00:02.000Z',
+        itemId: 'item-1',
+        trashedPath: trashed,
+      },
+    ];
+    await writeFile(
+      join(dir, `${runId}.jsonl`),
+      records.map((record) => `${JSON.stringify(record)}\n`).join(''),
+    );
+
+    expect((await listRuns(dir)).find((run) => run.runId === runId)?.incomplete).toBe(true);
+
+    const undone = await undoRun({ dir, lockPath: join(dir, 'lock'), runId });
+
+    expect(undone).toEqual([expect.objectContaining({ itemId: 'item-1', status: 'restored' })]);
+    expect(await readFile(orig, 'utf8')).toBe('hello');
+  });
+
+  it('reports interrupted items with no recoverable destination as unknown-outcome', async () => {
+    const dir = await makeDir();
+    const orig = join(dir, 'orig.txt');
+    await writeFile(orig, 'hello');
+
+    const runId = 'run-unknown';
+    const records: JournalRecord[] = [
+      {
+        type: 'run-start',
+        runId,
+        planId: 'plan-u2',
+        at: '2026-01-01T00:00:00.000Z',
+        apply: true,
+        itemCount: 2,
+      },
+      {
+        type: 'intent',
+        runId,
+        at: '2026-01-01T00:00:01.000Z',
+        itemId: 'item-1',
+        ruleId: 'xcode.derived-data',
+        action: 'remove-path',
+        path: orig,
+      },
+      {
+        type: 'intent',
+        runId,
+        at: '2026-01-01T00:00:02.000Z',
+        itemId: 'item-2',
+        ruleId: 'ios.backups',
+        action: 'trash-path',
+      },
+      {
+        type: 'trash-destination',
+        runId,
+        at: '2026-01-01T00:00:03.000Z',
+        itemId: 'item-2',
+        trashedPath: join(dir, 'trash', 'x'),
+      },
+    ];
+    await writeFile(
+      join(dir, `${runId}.jsonl`),
+      records.map((record) => `${JSON.stringify(record)}\n`).join(''),
+    );
+
+    const undone = await undoRun({ dir, lockPath: join(dir, 'lock'), runId });
+    const byId = new Map(undone.map((entry) => [entry.itemId, entry]));
+
+    expect(byId.get('item-1')?.status).toBe('unknown-outcome');
+    expect(byId.get('item-2')?.status).toBe('unknown-outcome');
+    expect(await readFile(orig, 'utf8')).toBe('hello');
+  });
 });
