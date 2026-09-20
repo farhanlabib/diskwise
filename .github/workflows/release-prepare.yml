@@ -1,0 +1,89 @@
+name: Prepare release
+
+# Opens the version-bump pull request: bumps packages/cli/package.json and
+# packages/cli/src/version.ts on a release/vX.Y.Z branch and opens a
+# "chore(release): vX.Y.Z" pull request against main. Merging that pull
+# request is what publishes (see .github/workflows/release.yml) — main is
+# branch-protected, so a direct push is not possible. Publishes nothing
+# itself. Refuses to run when the tag or the branch already exists.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'major, minor, patch, or an explicit X.Y.Z'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: prepare-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Bump version and open the release pull request
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Compute the new version
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION_INPUT" =~ ^(major|minor|patch|[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "error: version must be major, minor, patch, or X.Y.Z (got '$VERSION_INPUT')" >&2
+            exit 1
+          fi
+          old="$(node -p "require('./packages/cli/package.json').version")"
+          new="$(cd packages/cli && npm version "$VERSION_INPUT" --no-git-tag-version --allow-same-version)"
+          new="${new#v}"
+          echo "NEW_VERSION=$new" >> "$GITHUB_ENV"
+          echo "Bumping $old -> $new"
+
+      - name: Refuse if the tag already exists
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/v$NEW_VERSION" >/dev/null; then
+            echo "error: tag v$NEW_VERSION already exists; refusing to run" >&2
+            exit 1
+          fi
+
+      - name: Refuse if the branch already exists
+        run: |
+          if git ls-remote --exit-code --heads origin "refs/heads/release/v$NEW_VERSION" >/dev/null; then
+            echo "error: branch release/v$NEW_VERSION already exists; refusing to run" >&2
+            exit 1
+          fi
+
+      - name: Bump packages/cli/src/version.ts
+        run: |
+          sed -i "s/export const VERSION = '[^']*';/export const VERSION = '$NEW_VERSION';/" packages/cli/src/version.ts
+          grep -q "export const VERSION = '$NEW_VERSION';" packages/cli/src/version.ts
+
+      - name: Commit and push the release branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "release/v$NEW_VERSION"
+          git add packages/cli/package.json packages/cli/src/version.ts
+          git commit -m "chore(release): v$NEW_VERSION"
+          git push origin "release/v$NEW_VERSION"
+
+      - name: Open the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --base main \
+            --head "release/v$NEW_VERSION" \
+            --title "chore(release): v$NEW_VERSION" \
+            --body "Bumps the CLI version to $NEW_VERSION. Merging publishes diskwise@$NEW_VERSION to npm, creates the v$NEW_VERSION tag and GitHub release, and updates the Homebrew tap."

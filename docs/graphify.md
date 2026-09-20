@@ -26,7 +26,7 @@ standard library, so there is no runtime or dev dependency to justify.
 
 | Path | Purpose |
 | --- | --- |
-| `.github/workflows/graphify.yml` | Regenerates the graph on pushes to `main` and on pull requests touching `packages/**`, uploads it as the `package-graph` build artifact, and on `main` commits `docs/package-graph.md` back when it changed. |
+| `.github/workflows/graphify.yml` | Regenerates the graph on pushes to `main` and on pull requests touching `packages/**`, uploads it as the `package-graph` build artifact, and fails a pull request whose committed `docs/package-graph.md` is stale. It never pushes — `main` is branch-protected. |
 | `.github/scripts/generate-package-graph.mjs` | Zero-dependency Node script. Reads `pnpm-workspace.yaml`, every package manifest, and the static imports under `packages/*/src`, then writes the Mermaid graph plus a summary table. Runnable locally: `node .github/scripts/generate-package-graph.mjs`. |
 | `docs/package-graph.md` | The committed, generated artifact — GitHub renders the Mermaid block as a diagram. Generated, never edited by hand. |
 
@@ -36,16 +36,12 @@ imports agree with the manifests).
 
 ## What the maintainer has to do by hand
 
-Nothing for the workflow itself — it authenticates with the automatic `GITHUB_TOKEN`.
-Two repository settings to be aware of:
-
-- **Branch protection on `main`**: if pushes are restricted, add `github-actions[bot]`
-  as an allowed actor (Settings → Branches → rule → "Allow specified actors to push").
-  Otherwise the commit-back step fails; the artifact upload still succeeds either way.
-- **Workflow permissions** (Settings → Actions → General): must permit `GITHUB_TOKEN`
-  `contents: write` ("Read and write permissions", or a fine-grained policy that grants
-  it). Only the graph job asks for write, and only the commit-back step on `main` uses
-  it; pull request runs stay read-only.
+Nothing. The workflow authenticates with the automatic `GITHUB_TOKEN` and runs with
+`contents: read` only — it never pushes to `main`, which is branch-protected, so a
+workflow push would be rejected anyway. The graph is committed by whoever changes the
+imports: run `node .github/scripts/generate-package-graph.mjs` and include the result in
+the pull request. A pull request whose committed `docs/package-graph.md` does not match
+a fresh run fails the Graphify check with that command in the error message.
 
 ## Limitations
 
@@ -55,5 +51,6 @@ Two repository settings to be aware of:
 - `@diskwise/native-helper` appears as an isolated node: it is a shell-based helper with
   no manifest dependencies and no TypeScript imports — the code invokes it at runtime
   through `child_process`, which a static import scan cannot see.
-- The committed graph updates only on pushes to `main`; on pull requests it is available
-  as the `package-graph` artifact for review instead.
+- The workflow never pushes: the committed graph is refreshed by whoever changes the
+  imports, and the staleness check runs only on pull requests. The artifact is uploaded
+  on every run for review either way.

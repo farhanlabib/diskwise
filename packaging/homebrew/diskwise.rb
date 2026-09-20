@@ -1,8 +1,8 @@
 class Diskwise < Formula
   desc "Explains where your Mac's disk space went and only deletes what is provably safe"
   homepage "https://github.com/farhanlabib/diskwise"
-  url "https://github.com/farhanlabib/diskwise/archive/refs/tags/v0.1.0.tar.gz"
-  sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+  url "https://github.com/farhanlabib/diskwise/archive/refs/tags/v__VERSION__.tar.gz"
+  sha256 "__SHA256__"
   license "MIT"
 
   depends_on :macos
