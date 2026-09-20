@@ -83,6 +83,17 @@ export default tseslint.config(
     },
   },
   {
+    // CI helper scripts run in Node, not in the bundled app.
+    files: ['.github/scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        URL: 'readonly',
+      },
+    },
+  },
+  {
     // Playwright specs and config run in Node, not in the bundled app.
     files: ['e2e/**/*.ts', 'playwright.config.ts'],
     languageOptions: {

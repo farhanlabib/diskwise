@@ -5,13 +5,12 @@ import {
   mkdtemp,
   readFile,
   readdir,
-  realpath,
   rm,
   stat,
   utimes,
   writeFile,
 } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type APIRequestContext } from '@playwright/test';
@@ -20,7 +19,7 @@ const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 const cliEntry = path.join(repoRoot, 'packages', 'cli', 'dist', 'index.js');
 
 const FIXTURE_NAME = 'big-old.dmg';
-const FIXTURE_BYTES = 120_000_000;
+const FIXTURE_BYTES = 150_000_000;
 const RULE_ID = 'downloads.old-large';
 
 // A stand-in for the Swift helper so the run stays inside the temporary home.
@@ -52,7 +51,7 @@ async function walk(target) {
       }
       for (const name of names) stack.push(path.join(current, name));
     } else {
-      allocated += st.blocks * 512;
+      allocated += st.blocks ? st.blocks * 512 : st.size;
     }
   }
   return { allocated, entries };
@@ -189,7 +188,9 @@ function auth(): Record<string, string> {
 }
 
 test.beforeAll(async () => {
-  home = await mkdtemp(path.join(await realpath(tmpdir()), 'diskwise-e2e-home-'));
+  // Deliberately under the real home rather than tmpdir(): a scratch home in
+  // a system temp directory is not a place the scanner treats as a normal home.
+  home = await mkdtemp(path.join(homedir(), '.diskwise-e2e-home-'));
   const downloads = path.join(home, 'Downloads');
   await mkdir(downloads, { recursive: true });
 
@@ -197,6 +198,11 @@ test.beforeAll(async () => {
   await writeFile(target, Buffer.alloc(FIXTURE_BYTES, 7));
   const old = new Date(Date.now() - 200 * 86_400_000);
   await utimes(target, old, old);
+
+  const fixture = await stat(target);
+  if (fixture.size !== FIXTURE_BYTES) {
+    throw new Error(`fixture is ${fixture.size} bytes, expected ${FIXTURE_BYTES}`);
+  }
 
   const started = await startUi();
   baseUrl = (started.url.split('#')[0] ?? started.url).replace(/\/+$/, '');
@@ -219,7 +225,12 @@ test('applies a Trash cleanup against an isolated home, journals it, and undoes 
   expect(scanJob.state).toBe('done');
 
   const audit = scanJob.result as { findings: { ruleId: string }[] };
-  expect(audit.findings.map((finding) => finding.ruleId)).toContain(RULE_ID);
+  const seen = audit.findings.map((finding) => finding.ruleId);
+  const downloads = await readdir(path.join(home, 'Downloads')).catch(() => [] as string[]);
+  expect(
+    seen,
+    `scan of ${home} found ${seen.join(', ') || 'nothing'}; Downloads held ${downloads.join(', ') || 'nothing'}`,
+  ).toContain(RULE_ID);
 
   const planResponse = await request.post(`${baseUrl}/api/plans`, {
     headers: auth(),
