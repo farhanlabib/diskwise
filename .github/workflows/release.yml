@@ -42,6 +42,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
+          # This job only reads the version and the tag list.
+          package-manager-cache: false
       - id: decide
         env:
           REF_NAME: ${{ github.ref_name }}
